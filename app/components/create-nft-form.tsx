@@ -6,8 +6,12 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Upload, X, ChevronDown } from 'lucide-react'
 import { toast } from 'sonner'
+import { useAccount } from 'wagmi'
+import { useWriteCollectibleNftSafeMint } from '@/app/utils/collectible-nft'
 
 export function CreateNFTForm() {
+  const { address } = useAccount()
+  const { writeContract: safeMint, isPending } = useWriteCollectibleNftSafeMint()
   const [tags, setTags] = useState<string[]>(['Digital Art', 'Space', 'Abstract'])
   const [newTag, setNewTag] = useState('')
   const [category, setCategory] = useState<string>('')
@@ -105,9 +109,9 @@ export function CreateNFTForm() {
   }
 
   const handleCreateNFT = async () => {
-    if (!ipfsUrl || !title || !description || !category) {
+    if (!ipfsUrl || !title || !description || !category || !address) {
       toast.error('Validation Error', {
-        description: 'Please fill in all required fields (image, title, description, and category)',
+        description: 'Please fill in all required fields and connect your wallet',
         position: 'top-right'
       })
       return
@@ -127,13 +131,31 @@ export function CreateNFTForm() {
       const result = await uploadToIPFS(file)
       
       const metadataUrl = `${process.env.NEXT_PUBLIC_IPFS_URL}:8080/ipfs/${result.path}`
-      console.log('Metadata URL:', metadataUrl)
       
-      setTitle('')
-      setDescription('')
-      setCategory('')
-      setTags([])
-      setIpfsUrl(null)
+      // Call safeMint function
+      safeMint({
+        args: [address, metadataUrl],
+      }, {
+        onSuccess: (data) => {
+          toast.success('NFT Created Successfully!', {
+            description: 'Your NFT has been minted and metadata uploaded to IPFS.',
+            position: 'top-right'
+          })
+          // Reset form
+          setTitle('')
+          setDescription('')
+          setCategory('')
+          setTags([])
+          setIpfsUrl(null)
+        },
+        onError: (error: Error) => {
+          console.error('Error minting NFT:', error)
+          toast.error('Failed to Mint NFT', {
+            description: 'There was an error while minting your NFT. Please try again.',
+            position: 'top-right'
+          })
+        }
+      })
       
     } catch (error) {
       console.error('Error creating NFT:', error)
@@ -265,8 +287,9 @@ export function CreateNFTForm() {
           className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold" 
           size="lg"
           onClick={handleCreateNFT}
+          disabled={isPending}
         >
-          Create NFT
+          {isPending ? 'Creating NFT...' : 'Create NFT'}
         </Button>
       </div>
     </div>

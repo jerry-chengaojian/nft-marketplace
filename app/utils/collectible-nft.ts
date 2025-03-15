@@ -371,9 +371,11 @@ export const collectibleNftAbi = [
  
  */
 export const collectibleNftAddress = {
-  1: process.env.NEXT_PUBLIC_COLLECTIBLE_NFT_ADDRESS,
-  5: process.env.NEXT_PUBLIC_COLLECTIBLE_NFT_ADDRESS,
+  31337: process.env.NEXT_PUBLIC_COLLECTIBLE_NFT_ADDRESS as `0x${string}`,
+  5: process.env.NEXT_PUBLIC_COLLECTIBLE_NFT_ADDRESS as `0x${string}`,
 } as const
+
+console.log(collectibleNftAddress)
 
 /**
  
