@@ -1,11 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { Filter, MoreHorizontal, Plus } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useAccount } from 'wagmi'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
+import ProfileSection from '@/app/components/profile-section'
 
 export default function MyCollectionPage() {
   const { isConnected } = useAccount()
@@ -59,6 +59,9 @@ export default function MyCollectionPage() {
 
   return (
     <div className="flex-1 p-4 sm:p-8 mx-auto">
+      {/* Profile Section */}
+      <ProfileSection />
+
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
         <div>
           <h1 className="text-2xl font-bold">Your NFT Collection</h1>
