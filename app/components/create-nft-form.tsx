@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -11,6 +11,9 @@ export function CreateNFTForm() {
   const [newTag, setNewTag] = useState('')
   const [category, setCategory] = useState<string>('')
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+  const [ipfsUrl, setIpfsUrl] = useState<string | null>(null)
+  const [isUploading, setIsUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const categories = [
     { value: 'art', label: 'Art' },
@@ -39,24 +42,102 @@ export function CreateNFTForm() {
     setIsDropdownOpen(false)
   }
 
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0]
+    if (!selectedFile) return
+
+    // Validate file type and size
+    const validTypes = ['image/png', 'image/jpeg', 'image/gif', 'image/svg+xml', 'video/mp4', 'video/webm']
+    if (!validTypes.includes(selectedFile.type)) {
+      alert('Invalid file type. Please upload PNG, JPG, GIF, SVG, MP4, or WEBM')
+      return
+    }
+    if (selectedFile.size > 100 * 1024 * 1024) { // 100MB
+      alert('File size too large. Maximum size is 100MB')
+      return
+    }
+
+    try {
+      setIsUploading(true)
+      // Upload to IPFS first
+      const result = await uploadToIPFS(selectedFile)
+      const ipfsHash = result.path
+      const ipfsGatewayUrl = `${process.env.NEXT_PUBLIC_IPFS_URL}:8080/ipfs/${ipfsHash}`
+      
+      setIpfsUrl(ipfsGatewayUrl)
+    } catch (error) {
+      console.error('Error handling file:', error)
+      alert('Failed to upload file to IPFS')
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  const uploadToIPFS = async (file: File) => {
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_IPFS_URL}:5001/api/v0/add`, {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const result = await response.json()
+      return { path: result.Hash }
+    } catch (error) {
+      console.error('Error uploading to IPFS:', error)
+      throw new Error('Failed to upload to IPFS')
+    }
+  }
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
       <div>
         <div className="mb-6">
+          <input
+            type="file"
+            ref={fileInputRef}
+            className="hidden"
+            onChange={handleFileSelect}
+            accept=".png,.jpg,.jpeg,.gif,.svg,.mp4,.webm"
+          />
           <label className="block text-sm font-medium text-gray-700 mb-2">Upload File</label>
-          <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center h-64 flex flex-col items-center justify-center">
+          <div 
+            className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center h-64 flex flex-col items-center justify-center"
+            onClick={() => fileInputRef.current?.click()}
+          >
             <Upload className="h-12 w-12 text-gray-400 mb-3" />
             <div className="text-gray-500 mb-4">
               PNG, JPG, GIF, SVG, MP4, WEBM<br/>Max 100MB
             </div>
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white">Choose File</Button>
+            <Button 
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+              disabled={isUploading}
+            >
+              {isUploading ? 'Uploading...' : 'Choose File'}
+            </Button>
           </div>
         </div>
         
         <div className="mb-6">
           <label className="block text-sm font-medium text-gray-700 mb-2">Preview</label>
           <div className="border border-gray-200 rounded-xl p-4 h-64 flex items-center justify-center bg-gray-50">
-            <span className="text-gray-400">Upload file to preview</span>
+            {isUploading ? (
+              <div className="text-gray-400">Uploading to IPFS...</div>
+            ) : ipfsUrl ? (
+              <img 
+                src={ipfsUrl} 
+                alt="IPFS Preview" 
+                className="max-h-full max-w-full object-contain" 
+              />
+            ) : (
+              <span className="text-gray-400">Upload file to preview</span>
+            )}
           </div>
         </div>
       </div>
@@ -76,10 +157,6 @@ export function CreateNFTForm() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Price (USDT)</label>
             <Input type="number" placeholder="0.00" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Royalties (%)</label>
-            <Input type="number" placeholder="10" />
           </div>
         </div>
         
