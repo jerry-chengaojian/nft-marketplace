@@ -6,11 +6,13 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Upload, X, ChevronDown } from 'lucide-react'
 import { toast } from 'sonner'
-import { useAccount } from 'wagmi'
+import { useAccount, useSwitchChain } from 'wagmi'
 import { useWriteCollectibleNftSafeMint } from '@/app/utils/collectible-nft'
+import { hardhat, sepolia } from 'wagmi/chains'
 
 export function CreateNFTForm() {
-  const { address } = useAccount()
+  const { address, chainId } = useAccount()
+  const { switchChain } = useSwitchChain()
   const { writeContract: safeMint, isPending } = useWriteCollectibleNftSafeMint()
   const [tags, setTags] = useState<string[]>(['Digital Art', 'Space', 'Abstract'])
   const [newTag, setNewTag] = useState('')
@@ -115,6 +117,26 @@ export function CreateNFTForm() {
         position: 'top-right'
       })
       return
+    }
+
+    // Check if user is on the correct network based on environment
+    const supportedChainId = process.env.NODE_ENV === 'production' ? sepolia.id : hardhat.id
+    
+    if (chainId !== supportedChainId) {
+      const networkName = process.env.NODE_ENV === 'production' ? 'Sepolia' : 'Hardhat'
+      toast.error('Network Error', {
+        description: `Please switch to the ${networkName} network to mint NFTs`,
+        position: 'top-right'
+      })
+      
+      // Offer to switch networks automatically
+      try {
+        await switchChain({ chainId: supportedChainId })
+        return
+      } catch (error) {
+        console.error('Failed to switch network:', error)
+        return
+      }
     }
 
     try {
