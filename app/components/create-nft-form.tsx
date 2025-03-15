@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Upload, X, ChevronDown } from 'lucide-react'
+import { toast } from 'sonner'
 
 export function CreateNFTForm() {
   const [tags, setTags] = useState<string[]>(['Digital Art', 'Space', 'Abstract'])
@@ -14,6 +15,8 @@ export function CreateNFTForm() {
   const [ipfsUrl, setIpfsUrl] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [title, setTitle] = useState('')
+  const [description, setDescription] = useState('')
 
   const categories = [
     { value: 'art', label: 'Art' },
@@ -46,14 +49,18 @@ export function CreateNFTForm() {
     const selectedFile = e.target.files?.[0]
     if (!selectedFile) return
 
-    // Validate file type and size
     const validTypes = ['image/png', 'image/jpeg', 'image/gif', 'image/svg+xml', 'video/mp4', 'video/webm']
     if (!validTypes.includes(selectedFile.type)) {
-      alert('Invalid file type. Please upload PNG, JPG, GIF, SVG, MP4, or WEBM')
+      toast.error('Invalid File Type', {
+        description: 'Please upload PNG, JPG, GIF, SVG, MP4, or WEBM',
+        position: 'top-right'
+      })
       return
     }
-    if (selectedFile.size > 100 * 1024 * 1024) { // 100MB
-      alert('File size too large. Maximum size is 100MB')
+    if (selectedFile.size > 100 * 1024 * 1024) {
+      toast.error('File Too Large', {
+        description: 'Maximum file size is 100MB',
+      })
       return
     }
 
@@ -67,7 +74,9 @@ export function CreateNFTForm() {
       setIpfsUrl(ipfsGatewayUrl)
     } catch (error) {
       console.error('Error handling file:', error)
-      alert('Failed to upload file to IPFS')
+      toast.error('Error', {
+        description: 'Failed to upload file to IPFS. Please try again.',
+      })
     } finally {
       setIsUploading(false)
     }
@@ -92,6 +101,45 @@ export function CreateNFTForm() {
     } catch (error) {
       console.error('Error uploading to IPFS:', error)
       throw new Error('Failed to upload to IPFS')
+    }
+  }
+
+  const handleCreateNFT = async () => {
+    if (!ipfsUrl || !title || !description || !category) {
+      toast.error('Validation Error', {
+        description: 'Please fill in all required fields (image, title, description, and category)',
+        position: 'top-right'
+      })
+      return
+    }
+
+    try {
+      const metadata = {
+        image: ipfsUrl,
+        title,
+        description,
+        category,
+        tags: tags,
+      }
+
+      const blob = new Blob([JSON.stringify(metadata)], { type: 'application/json' })
+      const file = new File([blob], 'metadata.json')
+      const result = await uploadToIPFS(file)
+      
+      const metadataUrl = `${process.env.NEXT_PUBLIC_IPFS_URL}:8080/ipfs/${result.path}`
+      console.log('Metadata URL:', metadataUrl)
+      
+      setTitle('')
+      setDescription('')
+      setCategory('')
+      setTags([])
+      setIpfsUrl(null)
+      
+    } catch (error) {
+      console.error('Error creating NFT:', error)
+      toast.error('Error', {
+        description: 'Failed to create NFT. Please try again.',
+      })
     }
   }
 
@@ -145,19 +193,22 @@ export function CreateNFTForm() {
       <div className="space-y-6">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
-          <Input type="text" placeholder="e.g. Cosmic Dreams #1" />
+          <Input 
+            type="text" 
+            placeholder="e.g. Cosmic Dreams #1" 
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
         </div>
         
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
-          <Textarea placeholder="Tell the story of your NFT..." rows={4} />
-        </div>
-        
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Price (USDT)</label>
-            <Input type="number" placeholder="0.00" />
-          </div>
+          <Textarea 
+            placeholder="Tell the story of your NFT..." 
+            rows={4} 
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+          />
         </div>
         
         <div className="relative">
@@ -210,7 +261,11 @@ export function CreateNFTForm() {
           />
         </div>
         
-        <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold" size="lg">
+        <Button 
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold" 
+          size="lg"
+          onClick={handleCreateNFT}
+        >
           Create NFT
         </Button>
       </div>
