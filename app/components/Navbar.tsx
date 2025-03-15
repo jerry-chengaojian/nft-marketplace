@@ -16,8 +16,8 @@ export function Navbar() {
         <div className="flex items-center">
           <span className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">NFTMarket</span>
           <div className="hidden md:flex ml-12 space-x-6">
-            <Link href="#" className="text-indigo-600 font-medium">Marketplace</Link>
-            <Link href="#" className="text-gray-500 hover:text-gray-800">Create</Link>
+            <Link href="/" className="text-gray-500 hover:text-gray-800">Marketplace</Link>
+            <Link href="/create" className="text-gray-500 hover:text-gray-800">Create</Link>
             <Link href="#" className="text-gray-500 hover:text-gray-800">Community</Link>
           </div>
         </div>
@@ -61,8 +61,8 @@ export function Navbar() {
       {isMenuOpen && (
         <div className="md:hidden mt-4 pb-2 space-y-4">
           <div className="flex flex-col space-y-3">
-            <Link href="#" className="text-indigo-600 font-medium py-2">Marketplace</Link>
-            <Link href="#" className="text-gray-500 hover:text-gray-800 py-2">Create</Link>
+            <Link href="#" className="text-gray-500 hover:text-gray-800 py-2">Marketplace</Link>
+            <Link href="/create" className="text-gray-500 hover:text-gray-800 py-2">Create</Link>
             <Link href="#" className="text-gray-500 hover:text-gray-800 py-2">Community</Link>
           </div>
           <div className="pt-3 border-t border-gray-100">
