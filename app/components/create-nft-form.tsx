@@ -4,12 +4,23 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Upload, X } from 'lucide-react'
+import { Upload, X, ChevronDown } from 'lucide-react'
 
 export function CreateNFTForm() {
   const [tags, setTags] = useState<string[]>(['Digital Art', 'Space', 'Abstract'])
   const [newTag, setNewTag] = useState('')
+  const [category, setCategory] = useState<string>('')
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+
+  const categories = [
+    { value: 'art', label: 'Art' },
+    { value: 'collectibles', label: 'Collectibles' },
+    { value: 'music', label: 'Music' },
+    { value: 'photography', label: 'Photography' },
+    { value: 'virtual-worlds', label: 'Virtual Worlds' },
+    { value: 'sports', label: 'Sports' },
+    { value: 'utility', label: 'Utility' },
+  ]
 
   const removeTag = (tagToRemove: string) => {
     setTags(tags.filter(tag => tag !== tagToRemove))
@@ -23,6 +34,11 @@ export function CreateNFTForm() {
     }
   }
 
+  const selectCategory = (value: string, label: string) => {
+    setCategory(value)
+    setIsDropdownOpen(false)
+  }
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
       <div>
@@ -33,7 +49,7 @@ export function CreateNFTForm() {
             <div className="text-gray-500 mb-4">
               PNG, JPG, GIF, SVG, MP4, WEBM<br/>Max 100MB
             </div>
-            <Button>Choose File</Button>
+            <Button className="bg-blue-600 hover:bg-blue-700 text-white">Choose File</Button>
           </div>
         </div>
         
@@ -61,31 +77,46 @@ export function CreateNFTForm() {
             <label className="block text-sm font-medium text-gray-700 mb-2">Price (USDT)</label>
             <Input type="number" placeholder="0.00" />
           </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Royalties (%)</label>
+            <Input type="number" placeholder="10" />
+          </div>
         </div>
         
-        <div>
+        <div className="relative">
           <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
-          <Select>
-            <SelectTrigger>
-              <SelectValue placeholder="Select category" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="art">Art</SelectItem>
-              <SelectItem value="collectibles">Collectibles</SelectItem>
-              <SelectItem value="music">Music</SelectItem>
-              <SelectItem value="photography">Photography</SelectItem>
-              <SelectItem value="virtual-worlds">Virtual Worlds</SelectItem>
-              <SelectItem value="sports">Sports</SelectItem>
-              <SelectItem value="utility">Utility</SelectItem>
-            </SelectContent>
-          </Select>
+          <div 
+            className="flex items-center justify-between w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer"
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+          >
+            <span className={category ? 'text-gray-900' : 'text-gray-400'}>
+              {category ? categories.find(c => c.value === category)?.label : 'Select category'}
+            </span>
+            <ChevronDown className="h-4 w-4 text-gray-500" />
+          </div>
+          
+          {isDropdownOpen && (
+            <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+              <ul className="py-1 max-h-60 overflow-auto">
+                {categories.map((cat) => (
+                  <li 
+                    key={cat.value}
+                    className="px-3 py-2 hover:bg-indigo-100 cursor-pointer text-gray-900"
+                    onClick={() => selectCategory(cat.value, cat.label)}
+                  >
+                    {cat.label}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
         
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Tags</label>
           <div className="flex flex-wrap gap-2 mb-2">
             {tags.map((tag) => (
-              <span key={tag} className="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-full text-sm flex items-center">
+              <span key={tag} className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm flex items-center">
                 {tag}
                 <button onClick={() => removeTag(tag)} className="ml-1">
                   <X className="h-3 w-3" />
@@ -102,7 +133,7 @@ export function CreateNFTForm() {
           />
         </div>
         
-        <Button className="w-full" size="lg">
+        <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold" size="lg">
           Create NFT
         </Button>
       </div>
