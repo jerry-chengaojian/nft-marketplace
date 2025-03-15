@@ -18,6 +18,7 @@ export function Navbar() {
           <div className="hidden md:flex ml-12 space-x-6">
             <Link href="/" className="text-gray-500 hover:text-gray-800">Marketplace</Link>
             <Link href="/create" className="text-gray-500 hover:text-gray-800">Create</Link>
+            <Link href="/my-collection" className="text-gray-500 hover:text-gray-800">My Collection</Link>
             <Link href="#" className="text-gray-500 hover:text-gray-800">Community</Link>
           </div>
         </div>
@@ -63,6 +64,7 @@ export function Navbar() {
           <div className="flex flex-col space-y-3">
             <Link href="#" className="text-gray-500 hover:text-gray-800 py-2">Marketplace</Link>
             <Link href="/create" className="text-gray-500 hover:text-gray-800 py-2">Create</Link>
+            <Link href="/my-collection" className="text-gray-500 hover:text-gray-800 py-2">My Collection</Link>
             <Link href="#" className="text-gray-500 hover:text-gray-800 py-2">Community</Link>
           </div>
           <div className="pt-3 border-t border-gray-100">
