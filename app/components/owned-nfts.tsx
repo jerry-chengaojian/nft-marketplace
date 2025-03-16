@@ -16,6 +16,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { parseEther } from 'viem'
+import { useQueryClient } from '@tanstack/react-query'
 
 type NFT = {
   id: number
@@ -31,6 +32,7 @@ type NFT = {
 export default function OwnedNFTs() {
   const { address, isConnected, chainId } = useAccount()
   const publicClient = usePublicClient()
+  const queryClient = useQueryClient()
   const [ownedNfts, setOwnedNfts] = useState<NFT[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isListingModalOpen, setIsListingModalOpen] = useState(false)
@@ -41,22 +43,23 @@ export default function OwnedNFTs() {
   const { writeContractAsync: safeTransferFrom } = useWriteCollectibleNftSafeTransferFrom()
   
   // Get the balance (number of NFTs owned by the user)
-  const { data: balanceData, isError: balanceError } = useReadCollectibleNftBalanceOf({
+  const { data: balanceData, isError: balanceError, queryKey } = useReadCollectibleNftBalanceOf({
     args: address ? [address] : undefined,
     query: {
       enabled: !!address && isConnected,
     }
   })
-  
+
   // Fetch all NFTs owned by the user
   useEffect(() => {
     const fetchNFTs = async () => {
-      if (!address || !balanceData || balanceData === BigInt(0) || !chainId || !publicClient) {
+      if (!address || balanceData === undefined || !chainId || !publicClient) {
         setIsLoading(false)
         return
       }
       
       try {
+      setIsLoading(true)
         const nfts: NFT[] = []
         const balance = Number(balanceData)
         
@@ -108,7 +111,6 @@ export default function OwnedNFTs() {
             console.error(`Error fetching NFT at index ${i}:`, error)
           }
         }
-        
         setOwnedNfts(nfts)
       } catch (error) {
         console.error('Error fetching NFTs:', error)
@@ -212,8 +214,9 @@ export default function OwnedNFTs() {
           description: `Your NFT has been listed for ${listingPrice} ETH`
         })
         
-        // Refresh NFTs list
-        window.location.reload()
+        // More aggressive cache invalidation
+        // Invalidate all collectibleNft queries
+        queryClient.invalidateQueries({ queryKey })
       }
     } catch (error) {
       console.error('Error listing NFT:', error)
