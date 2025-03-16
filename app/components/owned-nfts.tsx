@@ -15,7 +15,7 @@ import { marketAddress } from '@/app/utils/market'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { parseEther } from 'viem'
+import { parseUnits } from 'viem'
 import { useQueryClient } from '@tanstack/react-query'
 
 type NFT = {
@@ -181,12 +181,12 @@ export default function OwnedNFTs() {
         return
       }
       
-      // Convert price to wei (assuming price is in ETH)
-      const priceInWei = parseEther(listingPrice)
+      // Convert price to USDT units (6 decimals for USDT)
+      const priceInUsdtUnits = parseUnits(listingPrice, 6)
       
       // Encode price data for the safeTransferFrom call
       // The market contract will extract this data to set the listing price
-      const priceData = priceInWei.toString(16).padStart(64, '0')
+      const priceData = priceInUsdtUnits.toString(16).padStart(64, '0')
       const data = `0x${priceData}`
       
       // Call safeTransferFrom to transfer the NFT to the marketplace
@@ -211,7 +211,7 @@ export default function OwnedNFTs() {
         await publicClient.waitForTransactionReceipt({ hash: tx })
         
         toast.success('NFT listed successfully', {
-          description: `Your NFT has been listed for ${listingPrice} ETH`
+          description: `Your NFT has been listed for ${listingPrice} USDT`
         })
         
         // More aggressive cache invalidation
@@ -270,22 +270,22 @@ export default function OwnedNFTs() {
           <DialogHeader>
             <DialogTitle>List NFT for Sale</DialogTitle>
             <DialogDescription>
-              Set a price for your NFT. Once listed, it will be available for purchase in the marketplace.
+              Set a price for your NFT in USDT. Once listed, it will be available for purchase in the marketplace.
             </DialogDescription>
           </DialogHeader>
           
           <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="price" className="text-right">
-                Price (ETH)
+            <div className="grid grid-cols-6 items-center gap-4">
+              <Label htmlFor="price" className="text-right col-span-2">
+                Price (USDT)
               </Label>
               <Input
                 id="price"
                 type="number"
                 step="0.01"
                 min="0"
-                placeholder="0.1"
-                className="col-span-3"
+                placeholder="10"
+                className="col-span-4"
                 value={listingPrice}
                 onChange={(e) => setListingPrice(e.target.value)}
               />
