@@ -7,9 +7,15 @@ import { useAccount, usePublicClient } from 'wagmi'
 import { 
   useReadCollectibleNftBalanceOf,
   collectibleNftAbi,
-  collectibleNftAddress
+  collectibleNftAddress,
+  useWriteCollectibleNftSafeTransferFrom
 } from '@/app/utils/collectible-nft'
 import { toast } from 'sonner'
+import { marketAddress } from '@/app/utils/market'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { parseEther } from 'viem'
 
 type NFT = {
   id: number
@@ -27,6 +33,12 @@ export default function OwnedNFTs() {
   const publicClient = usePublicClient()
   const [ownedNfts, setOwnedNfts] = useState<NFT[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isListingModalOpen, setIsListingModalOpen] = useState(false)
+  const [selectedNft, setSelectedNft] = useState<NFT | null>(null)
+  const [listingPrice, setListingPrice] = useState('')
+  const [isListing, setIsListing] = useState(false)
+  
+  const { writeContractAsync: safeTransferFrom } = useWriteCollectibleNftSafeTransferFrom()
   
   // Get the balance (number of NFTs owned by the user)
   const { data: balanceData, isError: balanceError } = useReadCollectibleNftBalanceOf({
@@ -149,38 +161,171 @@ export default function OwnedNFTs() {
     )
   }
 
+  const handleListForSale = (nft: NFT) => {
+    setSelectedNft(nft)
+    setListingPrice('')
+    setIsListingModalOpen(true)
+  }
+  
+  const handleConfirmListing = async () => {
+    if (!selectedNft || !address || !chainId) return
+    
+    try {
+      setIsListing(true)
+      
+      // Validate price
+      if (!listingPrice || parseFloat(listingPrice) <= 0) {
+        toast.error('Please enter a valid price')
+        return
+      }
+      
+      // Convert price to wei (assuming price is in ETH)
+      const priceInWei = parseEther(listingPrice)
+      
+      // Encode price data for the safeTransferFrom call
+      // The market contract will extract this data to set the listing price
+      const priceData = priceInWei.toString(16).padStart(64, '0')
+      const data = `0x${priceData}`
+      
+      // Call safeTransferFrom to transfer the NFT to the marketplace
+      const tx = await safeTransferFrom({
+        args: [
+          address,
+          marketAddress[chainId as keyof typeof marketAddress],
+          BigInt(selectedNft.id),
+          data as `0x${string}`
+        ]
+      })
+      
+      toast.success('NFT listing initiated', {
+        description: 'Your transaction is being processed...'
+      })
+      
+      // Close modal
+      setIsListingModalOpen(false)
+      
+      // Wait for transaction to be mined
+      if (publicClient) {
+        await publicClient.waitForTransactionReceipt({ hash: tx })
+        
+        toast.success('NFT listed successfully', {
+          description: `Your NFT has been listed for ${listingPrice} ETH`
+        })
+        
+        // Refresh NFTs list
+        window.location.reload()
+      }
+    } catch (error) {
+      console.error('Error listing NFT:', error)
+      toast.error('Failed to list NFT', {
+        description: 'There was an error listing your NFT. Please try again.'
+      })
+    } finally {
+      setIsListing(false)
+    }
+  }
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-      {ownedNfts.map((nft) => (
-        <div key={nft.id} className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 transition-all duration-300 hover:translate-y-[-4px]">
-          <div className="h-48 bg-cover bg-center" style={{ backgroundImage: `url('${nft.image}')` }}></div>
-          <div className="p-4">
-            <h3 className="font-semibold truncate">{nft.name}</h3>
-            {nft.description && (
-              <p className="text-sm text-gray-500 mt-1 line-clamp-2">{nft.description}</p>
-            )}
-            <div className="flex flex-wrap gap-1 mt-2">
-              {nft.tags && nft.tags.slice(0, 3).map((tag, index) => (
-                <span key={index} className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full text-xs">
-                  {tag}
-                </span>
-              ))}
-            </div>
-            <div className="flex justify-between items-center mt-3">
-              <div className="text-xs text-gray-500">Owned</div>
-              <div className="text-xs text-indigo-600 font-medium">Not Listed</div>
-            </div>
-            <div className="mt-4 flex space-x-2">
-              <Button 
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium"
-                size="sm"
-              >
-                List for Sale
-              </Button>
+    <>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {ownedNfts.map((nft) => (
+          <div key={nft.id} className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 transition-all duration-300 hover:translate-y-[-4px]">
+            <div className="h-48 bg-cover bg-center" style={{ backgroundImage: `url('${nft.image}')` }}></div>
+            <div className="p-4">
+              <h3 className="font-semibold truncate">{nft.name}</h3>
+              {nft.description && (
+                <p className="text-sm text-gray-500 mt-1 line-clamp-2">{nft.description}</p>
+              )}
+              <div className="flex flex-wrap gap-1 mt-2">
+                {nft.tags && nft.tags.slice(0, 3).map((tag, index) => (
+                  <span key={index} className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full text-xs">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+              <div className="flex justify-between items-center mt-3">
+                <div className="text-xs text-gray-500">Owned</div>
+                <div className="text-xs text-indigo-600 font-medium">Not Listed</div>
+              </div>
+              <div className="mt-4 flex space-x-2">
+                <Button 
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium"
+                  size="sm"
+                  onClick={() => handleListForSale(nft)}
+                >
+                  List for Sale
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
-      ))}
-    </div>
+        ))}
+      </div>
+      
+      {/* Listing Modal */}
+      <Dialog open={isListingModalOpen} onOpenChange={setIsListingModalOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>List NFT for Sale</DialogTitle>
+            <DialogDescription>
+              Set a price for your NFT. Once listed, it will be available for purchase in the marketplace.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="price" className="text-right">
+                Price (ETH)
+              </Label>
+              <Input
+                id="price"
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="0.1"
+                className="col-span-3"
+                value={listingPrice}
+                onChange={(e) => setListingPrice(e.target.value)}
+              />
+            </div>
+            
+            {selectedNft && (
+              <div className="flex items-center gap-4 mt-2">
+                <div className="h-16 w-16 bg-cover bg-center rounded" 
+                  style={{ backgroundImage: `url('${selectedNft.image}')` }}>
+                </div>
+                <div>
+                  <p className="font-medium">{selectedNft.name}</p>
+                  <p className="text-sm text-gray-500">ID: {selectedNft.id}</p>
+                </div>
+              </div>
+            )}
+          </div>
+          
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setIsListingModalOpen(false)}
+              disabled={isListing}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleConfirmListing}
+              disabled={isListing || !listingPrice}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              {isListing ? (
+                <>
+                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-b-transparent"></div>
+                  Listing...
+                </>
+              ) : (
+                'Confirm Listing'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 } 
