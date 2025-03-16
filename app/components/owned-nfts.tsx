@@ -17,6 +17,14 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { parseUnits } from 'viem'
 import { useQueryClient } from '@tanstack/react-query'
+import { 
+  CustomDialog, 
+  CustomDialogHeader, 
+  CustomDialogTitle, 
+  CustomDialogDescription, 
+  CustomDialogFooter,
+  CustomDialogContent
+} from '@/components/ui/custom-dialog'
 
 type NFT = {
   id: number
@@ -265,70 +273,68 @@ export default function OwnedNFTs() {
       </div>
       
       {/* Listing Modal */}
-      <Dialog open={isListingModalOpen} onOpenChange={setIsListingModalOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>List NFT for Sale</DialogTitle>
-            <DialogDescription>
-              Set a price for your NFT in USDT. Once listed, it will be available for purchase in the marketplace.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-6 items-center gap-4">
-              <Label htmlFor="price" className="text-right col-span-2">
-                Price (USDT)
-              </Label>
-              <Input
-                id="price"
-                type="number"
-                step="0.01"
-                min="0"
-                placeholder="10"
-                className="col-span-4"
-                value={listingPrice}
-                onChange={(e) => setListingPrice(e.target.value)}
-              />
-            </div>
-            
-            {selectedNft && (
-              <div className="flex items-center gap-4 mt-2">
-                <div className="h-16 w-16 bg-cover bg-center rounded" 
-                  style={{ backgroundImage: `url('${selectedNft.image}')` }}>
-                </div>
-                <div>
-                  <p className="font-medium">{selectedNft.name}</p>
-                  <p className="text-sm text-gray-500">ID: {selectedNft.id}</p>
-                </div>
-              </div>
-            )}
+      <CustomDialog open={isListingModalOpen} onOpenChange={setIsListingModalOpen} className="w-full max-w-[425px]">
+        <CustomDialogHeader>
+          <CustomDialogTitle>List NFT for Sale</CustomDialogTitle>
+          <CustomDialogDescription>
+            Set a price for your NFT in USDT. Once listed, it will be available for purchase in the marketplace.
+          </CustomDialogDescription>
+        </CustomDialogHeader>
+        
+        <CustomDialogContent className="grid gap-4">
+          <div className="grid grid-cols-6 items-center gap-4">
+            <Label htmlFor="price" className="text-right col-span-2">
+              Price (USDT)
+            </Label>
+            <Input
+              id="price"
+              type="number"
+              step="0.01"
+              min="0"
+              placeholder="10"
+              className="col-span-4"
+              value={listingPrice}
+              onChange={(e) => setListingPrice(e.target.value)}
+            />
           </div>
           
-          <DialogFooter>
-            <Button 
-              variant="outline" 
-              onClick={() => setIsListingModalOpen(false)}
-              disabled={isListing}
-            >
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleConfirmListing}
-              disabled={isListing || !listingPrice}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              {isListing ? (
-                <>
-                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-b-transparent"></div>
-                  Listing...
-                </>
-              ) : (
-                'Confirm Listing'
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          {selectedNft && (
+            <div className="flex items-center gap-4 mt-2">
+              <div className="h-16 w-16 bg-cover bg-center rounded" 
+                style={{ backgroundImage: `url('${selectedNft.image}')` }}>
+              </div>
+              <div>
+                <p className="font-medium">{selectedNft.name}</p>
+                <p className="text-sm text-gray-500">ID: {selectedNft.id}</p>
+              </div>
+            </div>
+          )}
+        </CustomDialogContent>
+        
+        <CustomDialogFooter>
+          <Button 
+            variant="outline" 
+            onClick={() => setIsListingModalOpen(false)}
+            disabled={isListing}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleConfirmListing}
+            disabled={isListing || !listingPrice}
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            {isListing ? (
+              <>
+                <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-b-transparent"></div>
+                Listing...
+              </>
+            ) : (
+              'Confirm Listing'
+            )}
+          </Button>
+        </CustomDialogFooter>
+      </CustomDialog>
     </>
   )
 } 
