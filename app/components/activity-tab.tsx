@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useAccount, useBlockNumber } from "wagmi"
+import { useAccount, useBlockNumber, usePublicClient } from "wagmi"
 import { formatDistanceToNow } from "date-fns"
 import { ArrowRightLeft, Check, AlertCircle } from "lucide-react"
 import { 
@@ -21,66 +21,85 @@ type ActivityEvent = {
 
 export default function ActivityTab() {
   const { address } = useAccount()
+  const { data: blockNumber } = useBlockNumber()
+  const publicClient = usePublicClient()
   const [events, setEvents] = useState<ActivityEvent[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   // Watch for Transfer events
   useWatchCollectibleNftTransferEvent({
-    onLogs: (logs) => {
-      console.log("Approval events:", logs)
+    fromBlock: blockNumber && blockNumber >= BigInt(1000) ? blockNumber - BigInt(1000) : BigInt(0),
+    onLogs: async (logs) => {
+      try {
+        const newEvents = await Promise.all(logs.map(async (log) => {
+          const timestamp = publicClient 
+            ? Number((await publicClient.getBlock({ blockNumber: log.blockNumber })).timestamp) * 1000
+            : Date.now();
+          return {
+            id: `transfer-${log.transactionHash}-${log.logIndex}`,
+            type: 'transfer' as const,
+            timestamp: timestamp,
+            data: {
+              from: log.args.from,
+              to: log.args.to,
+              tokenId: log.args.tokenId
+            }
+          }
+        }))
 
-      const newEvents = logs.map(log => ({
-        id: `transfer-${log.transactionHash}-${log.logIndex}`,
-        type: 'transfer' as const,
-        timestamp: Date.now(),
-        data: {
-          from: log.args.from,
-          to: log.args.to,
-          tokenId: log.args.tokenId
-        }
-      }));
-
-      // 过滤掉已经存在的事件
-      const uniqueNewEvents = newEvents.filter(newEvent => 
-        !events.some(existingEvent => 
-          existingEvent.id === newEvent.id
+        // Filter out duplicate events
+        const uniqueNewEvents = newEvents.filter(newEvent => 
+          !events.some(existingEvent => 
+            existingEvent.id === newEvent.id
+          )
         )
-      );
 
-      // 更新事件状态
-      setEvents(prev => [...uniqueNewEvents, ...prev].slice(0, 50));
-      setIsLoading(false);
+        setEvents(prev => [...uniqueNewEvents, ...prev].slice(0, 50))
+        setIsLoading(false)
+      } catch (error) {
+        console.error("Error processing transfer events:", error)
+        setIsLoading(false)
+      }
     },
     onError: (error) => {
-      console.error("Error watching transfer events:", error);
-      setIsLoading(false);
+      console.error("Error watching transfer events:", error)
+      setIsLoading(false)
     }
   })
 
   // Watch for Approval events
   useWatchCollectibleNftApprovalEvent({
-    onLogs: (logs) => {
-      const newEvents = logs.map(log => ({
-        id: `approval-${log.transactionHash}-${log.logIndex}`,
-        type: 'approval' as const,
-        timestamp: Date.now(),
-        data: {
-          owner: log.args.owner,
-          approved: log.args.approved,
-          tokenId: log.args.tokenId
-        }
-      }))
-      
-      // Filter out events that already exist
-      const uniqueNewEvents = newEvents.filter(newEvent => 
-        !events.some(existingEvent => 
-          existingEvent.id === newEvent.id
+    fromBlock: blockNumber && blockNumber >= BigInt(1000) ? blockNumber - BigInt(1000) : BigInt(0),
+    onLogs: async (logs) => {
+      try {
+        const newEvents = await Promise.all(logs.map(async (log) => {
+          const timestamp = publicClient 
+            ? Number((await publicClient.getBlock({ blockNumber: log.blockNumber })).timestamp) * 1000
+            : Date.now();
+          return {
+            id: `approval-${log.transactionHash}-${log.logIndex}`,
+            type: 'approval' as const,
+            timestamp,
+            data: {
+              owner: log.args.owner,
+              approved: log.args.approved,
+              tokenId: log.args.tokenId
+            }
+          }
+        }))
+
+        const uniqueNewEvents = newEvents.filter(newEvent => 
+          !events.some(existingEvent => 
+            existingEvent.id === newEvent.id
+          )
         )
-      );
-      
-      // Update events state
-      setEvents(prev => [...uniqueNewEvents, ...prev].slice(0, 50))
-      setIsLoading(false)
+
+        setEvents(prev => [...uniqueNewEvents, ...prev].slice(0, 50))
+        setIsLoading(false)
+      } catch (error) {
+        console.error("Error processing approval events:", error)
+        setIsLoading(false)
+      }
     },
     onError: (error) => {
       console.error("Error watching approval events:", error)
@@ -90,28 +109,37 @@ export default function ActivityTab() {
 
   // Watch for ApprovalForAll events
   useWatchCollectibleNftApprovalForAllEvent({
-    onLogs: (logs) => {
-      const newEvents = logs.map(log => ({
-        id: `approvalForAll-${log.transactionHash}-${log.logIndex}`,
-        type: 'approvalForAll' as const,
-        timestamp: Date.now(),
-        data: {
-          owner: log.args.owner,
-          operator: log.args.operator,
-          approved: log.args.approved
-        }
-      }))
-      
-      // Filter out events that already exist
-      const uniqueNewEvents = newEvents.filter(newEvent => 
-        !events.some(existingEvent => 
-          existingEvent.id === newEvent.id
+    fromBlock: blockNumber && blockNumber >= BigInt(1000) ? blockNumber - BigInt(1000) : BigInt(0),
+    onLogs: async (logs) => {
+      try {
+        const newEvents = await Promise.all(logs.map(async (log) => {
+          const timestamp = publicClient 
+            ? Number((await publicClient.getBlock({ blockNumber: log.blockNumber })).timestamp) * 1000
+            : Date.now();
+          return {
+            id: `approvalForAll-${log.transactionHash}-${log.logIndex}`,
+            type: 'approvalForAll' as const,
+            timestamp,
+            data: {
+              owner: log.args.owner,
+              operator: log.args.operator,
+              approved: log.args.approved
+            }
+          }
+        }))
+
+        const uniqueNewEvents = newEvents.filter(newEvent => 
+          !events.some(existingEvent => 
+            existingEvent.id === newEvent.id
+          )
         )
-      );
-      
-      // Update events state
-      setEvents(prev => [...uniqueNewEvents, ...prev].slice(0, 50))
-      setIsLoading(false)
+
+        setEvents(prev => [...uniqueNewEvents, ...prev].slice(0, 50))
+        setIsLoading(false)
+      } catch (error) {
+        console.error("Error processing approvalForAll events:", error)
+        setIsLoading(false)
+      }
     },
     onError: (error) => {
       console.error("Error watching approvalForAll events:", error)
