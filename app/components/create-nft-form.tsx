@@ -23,6 +23,7 @@ export function CreateNFTForm() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
+  const [isMetadataUploading, setIsMetadataUploading] = useState(false)
 
   const categories = [
     { value: 'art', label: 'Art' },
@@ -140,6 +141,7 @@ export function CreateNFTForm() {
     }
 
     try {
+      setIsMetadataUploading(true)
       const metadata = {
         image: ipfsUrl,
         title,
@@ -184,6 +186,8 @@ export function CreateNFTForm() {
       toast.error('Error', {
         description: 'Failed to create NFT. Please try again.',
       })
+    } finally {
+      setIsMetadataUploading(false)
     }
   }
 
@@ -309,9 +313,9 @@ export function CreateNFTForm() {
           className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold" 
           size="lg"
           onClick={handleCreateNFT}
-          disabled={isPending}
+          disabled={isPending || isMetadataUploading}
         >
-          {isPending ? 'Creating NFT...' : 'Create NFT'}
+          {isPending ? 'Creating NFT...' : isMetadataUploading ? 'Uploading Metadata...' : 'Create NFT'}
         </Button>
       </div>
     </div>
