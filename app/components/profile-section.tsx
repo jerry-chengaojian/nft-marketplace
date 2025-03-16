@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useAccount, useBalance } from 'wagmi'
 import { useReadCollectibleNftBalanceOf } from '../utils/collectible-nft'
+import { useReadMarketGetMyNfTs } from '../utils/market'
 import { useState, useEffect } from 'react'
 
 export default function ProfileSection() {
@@ -21,6 +22,13 @@ export default function ProfileSection() {
   // Fetch NFT balance
   const { data: nftBalanceData, isError: nftBalanceError } = useReadCollectibleNftBalanceOf({
     args: address ? [address] : undefined,
+    query: {
+      enabled: isConnected && !!address,
+    }
+  })
+
+  // Fetch NFTs on sale
+  const { data: myListedNfts, isError: listedNftsError } = useReadMarketGetMyNfTs({
     query: {
       enabled: isConnected && !!address,
     }
@@ -85,7 +93,13 @@ export default function ProfileSection() {
             <div className="text-sm text-gray-500">Owned</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold">3</div>
+            {isLoading ? (
+              <div className="text-2xl font-bold animate-pulse">Loading...</div>
+            ) : listedNftsError ? (
+              <div className="text-2xl font-bold text-red-500">Error</div>
+            ) : (
+              <div className="text-2xl font-bold">{myListedNfts ? myListedNfts.length : '0'}</div>
+            )}
             <div className="text-sm text-gray-500">On Sale</div>
           </div>
         </div>
