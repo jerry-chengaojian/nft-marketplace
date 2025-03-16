@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useAccount } from "wagmi"
+import { useAccount, useBlockNumber } from "wagmi"
 import { formatDistanceToNow } from "date-fns"
 import { ArrowRightLeft, Check, AlertCircle } from "lucide-react"
 import { 
@@ -27,6 +27,8 @@ export default function ActivityTab() {
   // Watch for Transfer events
   useWatchCollectibleNftTransferEvent({
     onLogs: (logs) => {
+      console.log("Approval events:", logs)
+
       const newEvents = logs.map(log => ({
         id: `transfer-${log.transactionHash}-${log.logIndex}`,
         type: 'transfer' as const,
@@ -69,7 +71,15 @@ export default function ActivityTab() {
         }
       }))
       
-      setEvents(prev => [...newEvents, ...prev].slice(0, 50))
+      // Filter out events that already exist
+      const uniqueNewEvents = newEvents.filter(newEvent => 
+        !events.some(existingEvent => 
+          existingEvent.id === newEvent.id
+        )
+      );
+      
+      // Update events state
+      setEvents(prev => [...uniqueNewEvents, ...prev].slice(0, 50))
       setIsLoading(false)
     },
     onError: (error) => {
@@ -92,7 +102,15 @@ export default function ActivityTab() {
         }
       }))
       
-      setEvents(prev => [...newEvents, ...prev].slice(0, 50))
+      // Filter out events that already exist
+      const uniqueNewEvents = newEvents.filter(newEvent => 
+        !events.some(existingEvent => 
+          existingEvent.id === newEvent.id
+        )
+      );
+      
+      // Update events state
+      setEvents(prev => [...uniqueNewEvents, ...prev].slice(0, 50))
       setIsLoading(false)
     },
     onError: (error) => {

@@ -375,8 +375,6 @@ export const collectibleNftAddress = {
   5: process.env.NEXT_PUBLIC_COLLECTIBLE_NFT_ADDRESS as `0x${string}`,
 } as const
 
-console.log(collectibleNftAddress)
-
 /**
  
  */

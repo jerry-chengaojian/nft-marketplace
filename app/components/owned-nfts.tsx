@@ -47,7 +47,6 @@ export default function OwnedNFTs() {
       try {
         const nfts: NFT[] = []
         const balance = Number(balanceData)
-        debugger;
         
         for (let i = 0; i < balance; i++) {
           try {
