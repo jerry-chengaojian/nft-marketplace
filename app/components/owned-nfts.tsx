@@ -221,9 +221,20 @@ export default function OwnedNFTs() {
           description: `Your NFT has been listed for ${listingPrice} USDT`
         })
         
-        // More aggressive cache invalidation
-        // Invalidate all collectibleNft queries
-        queryClient.invalidateQueries({ queryKey })
+        // Invalidate NFT balance, Market queries, and account balance
+        queryClient.invalidateQueries({ queryKey }) // NFT balance query
+        queryClient.invalidateQueries({ 
+          queryKey: [
+            'readContract',
+            {
+              address: marketAddress[chainId as keyof typeof marketAddress],
+              functionName: 'getMyNFTs',
+            }
+          ]
+        }) // Market getMyNFTs query
+        queryClient.invalidateQueries({ 
+          queryKey: ['balance', { address }]
+        }) // Account balance query
       }
     } catch (error) {
       console.error('Error listing NFT:', error)
