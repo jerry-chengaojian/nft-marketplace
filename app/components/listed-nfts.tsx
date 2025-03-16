@@ -12,6 +12,20 @@ import {
   collectibleNftAbi,
   collectibleNftAddress,
 } from '@/app/utils/collectible-nft'
+import { useWriteMarketChangePrice } from '@/app/utils/market'
+import { parseUnits } from 'viem'
+import { useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { 
+  CustomDialog, 
+  CustomDialogHeader, 
+  CustomDialogTitle, 
+  CustomDialogDescription, 
+  CustomDialogFooter,
+  CustomDialogContent
+} from '@/components/ui/custom-dialog'
 
 type NFT = {
   id: number
@@ -27,9 +41,16 @@ export default function ListedNFTs() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const publicClient = usePublicClient()
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [selectedNft, setSelectedNft] = useState<NFT | null>(null)
+  const [newPrice, setNewPrice] = useState('')
+  const [isEditing, setIsEditing] = useState(false)
+  const queryClient = useQueryClient()
+  
+  const { writeContractAsync: changePrice } = useWriteMarketChangePrice()
 
   // Fetch listed NFTs from the market contract
-  const { data: marketNfts, isError: isMarketError, isLoading: isMarketLoading } = 
+  const { data: marketNfts, isError: isMarketError, isLoading: isMarketLoading, queryKey } = 
     useReadMarketGetMyNfTs({
       query: {
         enabled: isConnected && !!address,
@@ -99,9 +120,61 @@ export default function ListedNFTs() {
   }
 
   // Handle edit listing
-  const handleEditListing = async (tokenId: number) => {
-    // Implementation for editing listing will go here
-    console.log('Edit listing for token ID:', tokenId)
+  const handleEditListing = async (nft: NFT) => {
+    setSelectedNft(nft)
+    setNewPrice(nft.price || '')
+    setIsEditModalOpen(true)
+  }
+
+  const handleConfirmEdit = async () => {
+    if (!selectedNft || !chainId) return
+
+    try {
+      setIsEditing(true)
+
+      // Validate price
+      if (!newPrice || parseFloat(newPrice) <= 0) {
+        toast.error('Please enter a valid price')
+        return
+      }
+
+      // Convert price to USDT units (6 decimals)
+      const priceInUsdtUnits = parseUnits(newPrice, 6)
+
+      // Call changePrice function
+      const tx = await changePrice({
+        args: [BigInt(selectedNft.id), priceInUsdtUnits]
+      })
+
+      toast.success('Price update initiated', {
+        description: 'Your transaction is being processed...'
+      })
+
+      // Close modal
+      setIsEditModalOpen(false)
+
+      // Wait for transaction to be mined
+      if (publicClient) {
+        await publicClient.waitForTransactionReceipt({ hash: tx })
+
+        toast.success('Price updated successfully', {
+          description: `New price set to ${newPrice} USDT`
+        })
+
+        queryClient.invalidateQueries({ 
+          queryKey: ['balance', { address }]
+        }) // Account balance query
+
+        queryClient.invalidateQueries({ queryKey }) // NFT balance query
+      }
+    } catch (error) {
+      console.error('Error updating price:', error)
+      toast.error('Failed to update price', {
+        description: 'There was an error updating the price. Please try again.'
+      })
+    } finally {
+      setIsEditing(false)
+    }
   }
 
   // Loading state
@@ -136,37 +209,102 @@ export default function ListedNFTs() {
 
   // Render NFTs
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-      {listedNfts.map((nft) => (
-        <div key={nft.id} className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 transition-all duration-300 hover:translate-y-[-4px]">
-          <div className="h-48 bg-cover bg-center" style={{ backgroundImage: `url('${nft.image}')` }}></div>
-          <div className="p-4">
-            <h3 className="font-semibold truncate">{nft.name}</h3>
-            <div className="flex justify-between items-center mt-3">
-              <div className="text-xs text-gray-500">Listed for</div>
-              <div className="text-sm font-semibold">{nft.price} USDT</div>
-            </div>
-            <div className="mt-4 flex space-x-2">
-              <Button 
-                variant="outline" 
-                className="flex-1 border-gray-300 hover:bg-gray-50 text-gray-700" 
-                size="sm"
-                onClick={() => handleEditListing(nft.id)}
-              >
-                Edit Listing
-              </Button>
-              <Button 
-                variant="destructive" 
-                className="flex-1 bg-red-100 hover:bg-red-200 text-red-600 border border-red-200" 
-                size="sm"
-                onClick={() => handleCancelListing(nft.id)}
-              >
-                Cancel
-              </Button>
+    <>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {listedNfts.map((nft) => (
+          <div key={nft.id} className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 transition-all duration-300 hover:translate-y-[-4px]">
+            <div className="h-48 bg-cover bg-center" style={{ backgroundImage: `url('${nft.image}')` }}></div>
+            <div className="p-4">
+              <h3 className="font-semibold truncate">{nft.name}</h3>
+              <div className="flex justify-between items-center mt-3">
+                <div className="text-xs text-gray-500">Listed for</div>
+                <div className="text-sm font-semibold">{nft.price} USDT</div>
+              </div>
+              <div className="mt-4 flex space-x-2">
+                <Button 
+                  variant="outline" 
+                  className="flex-1 border-gray-300 hover:bg-gray-50 text-gray-700" 
+                  size="sm"
+                  onClick={() => handleEditListing(nft)}
+                >
+                  Edit Listing
+                </Button>
+                <Button 
+                  variant="destructive" 
+                  className="flex-1 bg-red-100 hover:bg-red-200 text-red-600 border border-red-200" 
+                  size="sm"
+                  onClick={() => handleCancelListing(nft.id)}
+                >
+                  Cancel
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
-      ))}
-    </div>
+        ))}
+      </div>
+
+      <CustomDialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <CustomDialogHeader>
+          <CustomDialogTitle>Edit Listing Price</CustomDialogTitle>
+          <CustomDialogDescription>
+            Set a new price for your NFT in USDT. The change will be reflected once the transaction is confirmed.
+          </CustomDialogDescription>
+        </CustomDialogHeader>
+        
+        <CustomDialogContent className="grid gap-4">
+          <div className="grid grid-cols-6 items-center gap-4">
+            <Label htmlFor="price" className="text-right col-span-2">
+              New Price (USDT)
+            </Label>
+            <Input
+              id="price"
+              type="number"
+              step="0.01"
+              min="0"
+              placeholder="10"
+              className="col-span-4"
+              value={newPrice}
+              onChange={(e) => setNewPrice(e.target.value)}
+            />
+          </div>
+          
+          {selectedNft && (
+            <div className="flex items-center gap-4 mt-2">
+              <div className="h-16 w-16 bg-cover bg-center rounded" 
+                style={{ backgroundImage: `url('${selectedNft.image}')` }}>
+              </div>
+              <div>
+                <p className="font-medium">{selectedNft.name}</p>
+                <p className="text-sm text-gray-500">Current Price: {selectedNft.price} USDT</p>
+              </div>
+            </div>
+          )}
+        </CustomDialogContent>
+        
+        <CustomDialogFooter>
+          <Button 
+            variant="outline" 
+            onClick={() => setIsEditModalOpen(false)}
+            disabled={isEditing}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleConfirmEdit}
+            disabled={isEditing || !newPrice}
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            {isEditing ? (
+              <>
+                <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-b-transparent"></div>
+                Updating...
+              </>
+            ) : (
+              'Confirm Update'
+            )}
+          </Button>
+        </CustomDialogFooter>
+      </CustomDialog>
+    </>
   )
 } 
