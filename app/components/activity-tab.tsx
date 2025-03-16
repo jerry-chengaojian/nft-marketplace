@@ -147,21 +147,23 @@ export default function ActivityTab() {
     }
   })
 
-  // Filter events related to the current user
-  const userEvents = events.filter(event => {
-    if (!address) return false
-    
-    switch (event.type) {
-      case 'transfer':
-        return event.data.from === address || event.data.to === address
-      case 'approval':
-        return event.data.owner === address || event.data.approved === address
-      case 'approvalForAll':
-        return event.data.owner === address || event.data.operator === address
-      default:
-        return false
-    }
-  })
+  // Filter events related to the current user and sort by timestamp
+  const userEvents = events
+    .filter(event => {
+      if (!address) return false
+      
+      switch (event.type) {
+        case 'transfer':
+          return event.data.from === address || event.data.to === address
+        case 'approval':
+          return event.data.owner === address || event.data.approved === address
+        case 'approvalForAll':
+          return event.data.owner === address || event.data.operator === address
+        default:
+          return false
+      }
+    })
+    .sort((a, b) => b.timestamp - a.timestamp) // Sort by timestamp in descending order
 
   // Render event icon based on type
   const getEventIcon = (type: ActivityEvent['type']) => {
