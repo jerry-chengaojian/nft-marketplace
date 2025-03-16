@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { useAccount, usePublicClient } from 'wagmi'
 import { useReadMarketGetMyNfTs } from '@/app/utils/market'
-import { useReadCollectibleNftTokenUri } from '@/app/utils/collectible-nft'
 import { formatUnits } from 'viem'
 import { AlertCircle } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -12,7 +11,7 @@ import {
   collectibleNftAbi,
   collectibleNftAddress,
 } from '@/app/utils/collectible-nft'
-import { useWriteMarketChangePrice } from '@/app/utils/market'
+import { useWriteMarketChangePrice, useWriteMarketCancelOrder } from '@/app/utils/market'
 import { parseUnits } from 'viem'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
@@ -48,6 +47,7 @@ export default function ListedNFTs() {
   const queryClient = useQueryClient()
   
   const { writeContractAsync: changePrice } = useWriteMarketChangePrice()
+  const { writeContractAsync: cancelOrder } = useWriteMarketCancelOrder()
 
   // Fetch listed NFTs from the market contract
   const { data: marketNfts, isError: isMarketError, isLoading: isMarketLoading, queryKey } = 
@@ -115,8 +115,42 @@ export default function ListedNFTs() {
 
   // Handle cancel listing
   const handleCancelListing = async (tokenId: number) => {
-    // Implementation for cancelling listing will go here
-    console.log('Cancel listing for token ID:', tokenId)
+    try {
+      const tx = await cancelOrder({
+        args: [BigInt(tokenId)]
+      })
+
+      toast.success('Cancellation initiated', {
+        description: 'Your transaction is being processed...'
+      })
+
+      // Wait for transaction to be mined
+      if (publicClient) {
+        await publicClient.waitForTransactionReceipt({ hash: tx })
+
+        toast.success('NFT listing cancelled successfully')
+
+        // Invalidate queries to refresh data
+        queryClient.invalidateQueries({ 
+          queryKey: ['balance', { address }]
+        })
+        queryClient.invalidateQueries({ queryKey })
+        queryClient.invalidateQueries({ 
+          queryKey: [
+            'readContract',
+            {
+              address: collectibleNftAddress[chainId as keyof typeof collectibleNftAddress],
+              functionName: 'balanceOf',
+            }
+          ]
+        })
+      }
+    } catch (error) {
+      console.error('Error cancelling listing:', error)
+      toast.error('Failed to cancel listing', {
+        description: 'There was an error cancelling your listing. Please try again.'
+      })
+    }
   }
 
   // Handle edit listing
