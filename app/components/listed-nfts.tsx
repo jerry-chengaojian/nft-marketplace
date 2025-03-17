@@ -25,6 +25,7 @@ import {
   CustomDialogFooter,
   CustomDialogContent
 } from '@/components/ui/custom-dialog'
+import { useReadCollectibleNftTokenUri } from '@/app/utils/collectible-nft'
 
 type NFT = {
   id: number
@@ -32,6 +33,42 @@ type NFT = {
   image: string
   status: 'owned' | 'listed'
   price: string | null
+}
+
+function NFTMetadata({ tokenId, onMetadataLoaded }: { 
+  tokenId: bigint, 
+  onMetadataLoaded: (metadata: { name: string, image: string }) => void 
+}) {
+  const { data: tokenUri } = useReadCollectibleNftTokenUri({
+    args: [tokenId],
+    query: {
+      enabled: !!tokenId
+    }
+  })
+
+  useEffect(() => {
+    const fetchMetadata = async () => {
+      if (!tokenUri) return
+
+      try {
+        const response = await fetch(tokenUri)
+        if (response.ok) {
+          const metadata = await response.json()
+          onMetadataLoaded(metadata)
+        }
+      } catch (err) {
+        console.error('Error fetching metadata:', err)
+        onMetadataLoaded({ 
+          name: `NFT #${tokenId.toString()}`, 
+          image: 'https://placehold.co/600x400?text=NFT+Image' 
+        })
+      }
+    }
+
+    fetchMetadata()
+  }, [tokenUri, tokenId, onMetadataLoaded])
+
+  return null
 }
 
 export default function ListedNFTs() {
@@ -58,61 +95,24 @@ export default function ListedNFTs() {
       }
     })
 
-  // Process NFT data and fetch metadata
+  // Process NFT data
   useEffect(() => {
-    const fetchNftMetadata = async () => {
-      if (!marketNfts || marketNfts.length === 0 || !publicClient || !chainId) {
-        setIsLoading(false)
-        return
-      }
-
-      try {
-        const nftPromises = marketNfts.map(async (nft) => {
-          // Fetch token URI for each NFT using publicClient
-          const tokenUri = await publicClient.readContract({
-            address: collectibleNftAddress[chainId as keyof typeof collectibleNftAddress],
-            abi: collectibleNftAbi,
-            functionName: 'tokenURI',
-            args: [nft.tokenId]
-          })
-
-          // Fetch metadata from the token URI
-          let metadata = { name: `NFT #${nft.tokenId.toString()}`, image: '' }
-          try {
-            // If the URI is IPFS or HTTP, fetch the metadata
-            if (tokenUri) {
-              const response = await fetch(tokenUri)
-              if (response.ok) {
-                metadata = await response.json()
-              }
-            }
-          } catch (err) {
-            console.error('Error fetching metadata:', err)
-          }
-
-          return {
-            id: Number(nft.tokenId),
-            name: metadata.name,
-            image: metadata.image || 'https://placehold.co/600x400?text=NFT+Image',
-            status: 'listed',
-            price: formatUnits(nft.price, 6)
-          } as NFT
-        })
-
-        const nftsWithMetadata = await Promise.all(nftPromises)
-        setListedNfts(nftsWithMetadata)
-      } catch (err) {
-        console.error('Error processing NFTs:', err)
-        setError('Failed to load your listed NFTs. Please try again later.')
-      } finally {
-        setIsLoading(false)
-      }
+    if (!marketNfts || marketNfts.length === 0) {
+      setIsLoading(false)
+      return
     }
 
-    if (marketNfts && !isMarketLoading) {
-      fetchNftMetadata()
-    }
-  }, [marketNfts, isMarketLoading, address])
+    const initialNfts = marketNfts.map(nft => ({
+      id: Number(nft.tokenId),
+      name: `NFT #${nft.tokenId.toString()}`,
+      image: 'https://placehold.co/600x400?text=Loading...',
+      status: 'listed' as const,
+      price: formatUnits(nft.price, 6)
+    }))
+
+    setListedNfts(initialNfts)
+    setIsLoading(false)
+  }, [marketNfts])
 
   // Handle cancel listing
   const handleCancelListing = async (tokenId: number) => {
@@ -270,6 +270,20 @@ export default function ListedNFTs() {
   // Render NFTs
   return (
     <>
+      {marketNfts?.map(nft => (
+        <NFTMetadata 
+          key={nft.tokenId.toString()}
+          tokenId={nft.tokenId}
+          onMetadataLoaded={(metadata) => {
+            setListedNfts(prev => prev.map(item => 
+              item.id === Number(nft.tokenId) 
+                ? { ...item, name: metadata.name, image: metadata.image }
+                : item
+            ))
+          }}
+        />
+      ))}
+      
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {listedNfts.map((nft) => (
           <div key={nft.id} className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 transition-all duration-300 hover:translate-y-[-4px]">
