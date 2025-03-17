@@ -14,7 +14,7 @@ import {
 import { useWriteMarketChangePrice, useWriteMarketCancelOrder } from '@/app/utils/market'
 import { parseUnits } from 'viem'
 import { useQueryClient } from '@tanstack/react-query'
-import { toast } from 'sonner'
+import { useNotification } from '@/components/ui/notification-provider'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { 
@@ -45,6 +45,7 @@ export default function ListedNFTs() {
   const [newPrice, setNewPrice] = useState('')
   const [isEditing, setIsEditing] = useState(false)
   const queryClient = useQueryClient()
+  const { showNotification } = useNotification()
   
   const { writeContractAsync: changePrice } = useWriteMarketChangePrice()
   const { writeContractAsync: cancelOrder } = useWriteMarketCancelOrder()
@@ -120,15 +121,23 @@ export default function ListedNFTs() {
         args: [BigInt(tokenId)]
       })
 
-      toast.success('Cancellation initiated', {
-        description: 'Your transaction is being processed...'
+      showNotification({
+        title: 'Cancellation initiated',
+        description: 'Your transaction is being processed...',
+        variant: 'info',
+        position: 'top-left'
       })
 
       // Wait for transaction to be mined
       if (publicClient) {
         await publicClient.waitForTransactionReceipt({ hash: tx })
 
-        toast.success('NFT listing cancelled successfully')
+        showNotification({
+          title: 'Success',
+          description: 'NFT listing cancelled successfully',
+          variant: 'success',
+          position: 'top-left'
+        })
 
         // Invalidate queries to refresh data
         queryClient.invalidateQueries({ 
@@ -147,8 +156,11 @@ export default function ListedNFTs() {
       }
     } catch (error) {
       console.error('Error cancelling listing:', error)
-      toast.error('Failed to cancel listing', {
-        description: 'There was an error cancelling your listing. Please try again.'
+      showNotification({
+        title: 'Failed to cancel listing',
+        description: 'There was an error cancelling your listing. Please try again.',
+        variant: 'error',
+        position: 'top-left'
       })
     }
   }
@@ -168,7 +180,12 @@ export default function ListedNFTs() {
 
       // Validate price
       if (!newPrice || parseFloat(newPrice) <= 0) {
-        toast.error('Please enter a valid price')
+        showNotification({
+          title: 'Invalid price',
+          description: 'Please enter a valid price',
+          variant: 'error',
+          position: 'top-left'
+        })
         return
       }
 
@@ -180,8 +197,11 @@ export default function ListedNFTs() {
         args: [BigInt(selectedNft.id), priceInUsdtUnits]
       })
 
-      toast.success('Price update initiated', {
-        description: 'Your transaction is being processed...'
+      showNotification({
+        title: 'Price update initiated',
+        description: 'Your transaction is being processed...',
+        variant: 'info',
+        position: 'top-left'
       })
 
       // Close modal
@@ -191,8 +211,11 @@ export default function ListedNFTs() {
       if (publicClient) {
         await publicClient.waitForTransactionReceipt({ hash: tx })
 
-        toast.success('Price updated successfully', {
-          description: `New price set to ${newPrice} USDT`
+        showNotification({
+          title: 'Price updated successfully',
+          description: `New price set to ${newPrice} USDT`,
+          variant: 'success',
+          position: 'top-left'
         })
 
         queryClient.invalidateQueries({ 
@@ -203,8 +226,11 @@ export default function ListedNFTs() {
       }
     } catch (error) {
       console.error('Error updating price:', error)
-      toast.error('Failed to update price', {
-        description: 'There was an error updating the price. Please try again.'
+      showNotification({
+        title: 'Failed to update price',
+        description: 'There was an error updating the price. Please try again.',
+        variant: 'error',
+        position: 'top-left'
       })
     } finally {
       setIsEditing(false)

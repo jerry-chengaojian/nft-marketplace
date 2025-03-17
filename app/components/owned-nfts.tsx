@@ -10,7 +10,7 @@ import {
   collectibleNftAddress,
   useWriteCollectibleNftSafeTransferFrom
 } from '@/app/utils/collectible-nft'
-import { toast } from 'sonner'
+import { useNotification } from '@/components/ui/notification-provider'
 import { marketAddress } from '@/app/utils/market'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -46,6 +46,7 @@ export default function OwnedNFTs() {
   const [selectedNft, setSelectedNft] = useState<NFT | null>(null)
   const [listingPrice, setListingPrice] = useState('')
   const [isListing, setIsListing] = useState(false)
+  const { showNotification } = useNotification()
   
   const { writeContractAsync: safeTransferFrom } = useWriteCollectibleNftSafeTransferFrom()
   
@@ -121,8 +122,11 @@ export default function OwnedNFTs() {
         setOwnedNfts(nfts)
       } catch (error) {
         console.error('Error fetching NFTs:', error)
-        toast.error('Failed to load your NFTs', {
-          description: 'There was an error fetching your NFTs from the blockchain.'
+        showNotification({
+          title: 'Failed to load your NFTs',
+          description: 'There was an error fetching your NFTs from the blockchain.',
+          variant: 'error',
+          position: 'top-left'
         })
       } finally {
         setIsLoading(false)
@@ -184,7 +188,12 @@ export default function OwnedNFTs() {
       
       // Validate price
       if (!listingPrice || parseFloat(listingPrice) <= 0) {
-        toast.error('Please enter a valid price')
+        showNotification({
+          title: 'Invalid price',
+          description: 'Please enter a valid price',
+          variant: 'error',
+          position: 'top-left'
+        })
         return
       }
       
@@ -206,8 +215,11 @@ export default function OwnedNFTs() {
         ]
       })
       
-      toast.success('NFT listing initiated', {
-        description: 'Your transaction is being processed...'
+      showNotification({
+        title: 'NFT listing initiated',
+        description: 'Your transaction is being processed...',
+        variant: 'info',
+        position: 'top-left'
       })
       
       // Close modal
@@ -217,8 +229,11 @@ export default function OwnedNFTs() {
       if (publicClient) {
         await publicClient.waitForTransactionReceipt({ hash: tx })
         
-        toast.success('NFT listed successfully', {
-          description: `Your NFT has been listed for ${listingPrice} USDT`
+        showNotification({
+          title: 'NFT listed successfully',
+          description: `Your NFT has been listed for ${listingPrice} USDT`,
+          variant: 'success',
+          position: 'top-left'
         })
         
         // Invalidate NFT balance, Market queries, and account balance
@@ -238,8 +253,11 @@ export default function OwnedNFTs() {
       }
     } catch (error) {
       console.error('Error listing NFT:', error)
-      toast.error('Failed to list NFT', {
-        description: 'There was an error listing your NFT. Please try again.'
+      showNotification({
+        title: 'Failed to list NFT',
+        description: 'There was an error listing your NFT. Please try again.',
+        variant: 'error',
+        position: 'top-left'
       })
     } finally {
       setIsListing(false)
