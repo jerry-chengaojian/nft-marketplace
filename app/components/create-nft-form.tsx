@@ -63,6 +63,7 @@ export function CreateNFTForm() {
         title: 'Invalid File Type',
         description: 'Please upload PNG, JPG, GIF, SVG, MP4, or WEBM',
         variant: 'error',
+        position: 'top-left'
       })
       return
     }
@@ -71,6 +72,7 @@ export function CreateNFTForm() {
         title: 'File Too Large',
         description: 'Maximum file size is 100MB',
         variant: 'error',
+        position: 'top-left'
       })
       return
     }
@@ -89,6 +91,7 @@ export function CreateNFTForm() {
         title: 'Error',
         description: 'Failed to upload file to IPFS. Please try again.',
         variant: 'error',
+        position: 'top-left'
       })
     } finally {
       setIsUploading(false)
@@ -123,6 +126,7 @@ export function CreateNFTForm() {
         title: 'Validation Error',
         description: 'Please fill in all required fields and connect your wallet',
         variant: 'error',
+        position: 'top-left'
       })
       return
     }
@@ -136,6 +140,7 @@ export function CreateNFTForm() {
         title: 'Network Error',
         description: `Please switch to the ${networkName} network to mint NFTs`,
         variant: 'warning',
+        position: 'top-left'
       })
       
       // Offer to switch networks automatically
@@ -173,6 +178,7 @@ export function CreateNFTForm() {
             title: 'NFT Created Successfully!',
             description: 'Your NFT has been minted and metadata uploaded to IPFS.',
             variant: 'success',
+            position: 'top-left'
           })
           // Reset form
           setTitle('')
@@ -187,6 +193,7 @@ export function CreateNFTForm() {
             title: 'Failed to Mint NFT',
             description: 'There was an error while minting your NFT. Please try again.',
             variant: 'error',
+            position: 'top-left'
           })
         }
       })
@@ -197,6 +204,7 @@ export function CreateNFTForm() {
         title: 'Error',
         description: 'Failed to create NFT. Please try again.',
         variant: 'error',
+        position: 'top-left'
       })
     } finally {
       setIsMetadataUploading(false)

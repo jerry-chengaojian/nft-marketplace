@@ -11,10 +11,10 @@ const notificationVariants = cva(
     variants: {
       variant: {
         default: "bg-background border-border",
-        success: "bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200 dark:border-emerald-800",
-        info: "bg-blue-50 dark:bg-blue-950/50 border-blue-200 dark:border-blue-800",
-        warning: "bg-amber-50 dark:bg-amber-950/50 border-amber-200 dark:border-amber-800",
-        error: "bg-destructive/10 dark:bg-destructive/20 border-destructive/50 dark:border-destructive/50",
+        success: "bg-emerald-100 dark:bg-emerald-900 border-emerald-200 dark:border-emerald-800",
+        info: "bg-blue-100 dark:bg-blue-900 border-blue-200 dark:border-blue-800",
+        warning: "bg-amber-100 dark:bg-amber-900 border-amber-200 dark:border-amber-800",
+        error: "bg-red-100 dark:bg-red-900 border-destructive/50 dark:border-destructive/50",
       },
     },
     defaultVariants: {
@@ -42,10 +42,10 @@ const Notification = React.forwardRef<HTMLDivElement, NotificationProps>(
     const Icon = iconMap[variant || "default"]
     const iconColors = {
       default: "text-foreground",
-      success: "text-emerald-600 dark:text-emerald-500",
-      info: "text-blue-600 dark:text-blue-500",
-      warning: "text-amber-600 dark:text-amber-500",
-      error: "text-destructive dark:text-destructive",
+      success: "text-emerald-600 dark:text-emerald-400",
+      info: "text-blue-600 dark:text-blue-400",
+      warning: "text-amber-600 dark:text-amber-400",
+      error: "text-destructive dark:text-red-400",
     }
 
     return (
