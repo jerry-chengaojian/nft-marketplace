@@ -3,7 +3,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./components/RainbowKitProviders";
 import { Navbar } from './components/Navbar';
-import { Toaster } from 'sonner'
 import { NotificationProvider } from '@/components/ui/notification-provider'
 
 const geistSans = Geist({
@@ -37,7 +36,6 @@ export default function RootLayout({
             {children}
           </Providers>
         </NotificationProvider>
-        <Toaster />
       </body>
     </html>
   );
