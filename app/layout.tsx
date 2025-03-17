@@ -4,6 +4,7 @@ import "./globals.css";
 import { Providers } from "./components/RainbowKitProviders";
 import { Navbar } from './components/Navbar';
 import { Toaster } from 'sonner'
+import { NotificationProvider } from '@/components/ui/notification-provider'
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,10 +31,12 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased container mx-auto`}
       >
-        <Providers>
-          <Navbar />
-          {children}
-        </Providers>
+        <NotificationProvider>
+          <Providers>
+            <Navbar />
+            {children}
+          </Providers>
+        </NotificationProvider>
         <Toaster />
       </body>
     </html>

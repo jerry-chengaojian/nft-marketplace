@@ -5,10 +5,10 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Upload, X, ChevronDown } from 'lucide-react'
-import { toast } from 'sonner'
 import { useAccount, useSwitchChain } from 'wagmi'
 import { useWriteCollectibleNftSafeMint } from '@/app/utils/collectible-nft'
 import { hardhat, sepolia } from 'wagmi/chains'
+import { useNotification } from '@/components/ui/notification-provider'
 
 export function CreateNFTForm() {
   const { address, chainId } = useAccount()
@@ -24,6 +24,7 @@ export function CreateNFTForm() {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [isMetadataUploading, setIsMetadataUploading] = useState(false)
+  const { showNotification } = useNotification()
 
   const categories = [
     { value: 'art', label: 'Art' },
@@ -58,15 +59,18 @@ export function CreateNFTForm() {
 
     const validTypes = ['image/png', 'image/jpeg', 'image/gif', 'image/svg+xml', 'video/mp4', 'video/webm']
     if (!validTypes.includes(selectedFile.type)) {
-      toast.error('Invalid File Type', {
+      showNotification({
+        title: 'Invalid File Type',
         description: 'Please upload PNG, JPG, GIF, SVG, MP4, or WEBM',
-        position: 'top-right'
+        variant: 'error',
       })
       return
     }
     if (selectedFile.size > 100 * 1024 * 1024) {
-      toast.error('File Too Large', {
+      showNotification({
+        title: 'File Too Large',
         description: 'Maximum file size is 100MB',
+        variant: 'error',
       })
       return
     }
@@ -81,8 +85,10 @@ export function CreateNFTForm() {
       setIpfsUrl(ipfsGatewayUrl)
     } catch (error) {
       console.error('Error handling file:', error)
-      toast.error('Error', {
+      showNotification({
+        title: 'Error',
         description: 'Failed to upload file to IPFS. Please try again.',
+        variant: 'error',
       })
     } finally {
       setIsUploading(false)
@@ -113,9 +119,10 @@ export function CreateNFTForm() {
 
   const handleCreateNFT = async () => {
     if (!ipfsUrl || !title || !description || !category || !address) {
-      toast.error('Validation Error', {
+      showNotification({
+        title: 'Validation Error',
         description: 'Please fill in all required fields and connect your wallet',
-        position: 'top-right'
+        variant: 'error',
       })
       return
     }
@@ -125,9 +132,10 @@ export function CreateNFTForm() {
     
     if (chainId !== supportedChainId) {
       const networkName = process.env.NODE_ENV === 'production' ? 'Sepolia' : 'Hardhat'
-      toast.error('Network Error', {
+      showNotification({
+        title: 'Network Error',
         description: `Please switch to the ${networkName} network to mint NFTs`,
-        position: 'top-right'
+        variant: 'warning',
       })
       
       // Offer to switch networks automatically
@@ -161,9 +169,10 @@ export function CreateNFTForm() {
         args: [address, metadataUrl],
       }, {
         onSuccess: (data) => {
-          toast.success('NFT Created Successfully!', {
+          showNotification({
+            title: 'NFT Created Successfully!',
             description: 'Your NFT has been minted and metadata uploaded to IPFS.',
-            position: 'top-right'
+            variant: 'success',
           })
           // Reset form
           setTitle('')
@@ -174,17 +183,20 @@ export function CreateNFTForm() {
         },
         onError: (error: Error) => {
           console.error('Error minting NFT:', error)
-          toast.error('Failed to Mint NFT', {
+          showNotification({
+            title: 'Failed to Mint NFT',
             description: 'There was an error while minting your NFT. Please try again.',
-            position: 'top-right'
+            variant: 'error',
           })
         }
       })
       
     } catch (error) {
       console.error('Error creating NFT:', error)
-      toast.error('Error', {
+      showNotification({
+        title: 'Error',
         description: 'Failed to create NFT. Please try again.',
+        variant: 'error',
       })
     } finally {
       setIsMetadataUploading(false)
