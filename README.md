@@ -1,4 +1,70 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# NFT Marketplace DApp
+
+A full-stack decentralized NFT marketplace built with Next.js, TypeScript, and Ethereum smart contracts.
+
+## Overview
+
+This project is a complete NFT marketplace that allows users to:
+
+- Create and mint new NFTs
+- List NFTs for sale
+- Buy NFTs with USDT
+- Manage their NFT collection
+- Track transaction activity
+
+## Tech Stack
+
+### Frontend
+- **Next.js 14** with App Router
+- **TypeScript** for type safety
+- **TailwindCSS** for styling
+- **Shadcn UI** for component library
+- **RainbowKit** for wallet connection
+- **Wagmi** for blockchain interactions
+- **Viem** for Ethereum data types and utilities
+
+### Blockchain
+- **Solidity** smart contracts
+- **OpenZeppelin** for contract standards
+- **Hardhat** for local development
+- **Sepolia** testnet for production deployment
+
+## Smart Contracts
+
+The project includes three main smart contracts:
+
+1. **CollectibleNFT (ERC721)**: Handles NFT creation and ownership
+2. **USDTCoin (ERC20)**: Simulates USDT for transactions
+3. **Market**: Manages NFT listings, sales, and fees
+
+## Key Features
+
+### NFT Creation
+Users can upload images to IPFS and mint them as NFTs with metadata including title, description, category, and tags.
+
+### NFT Marketplace
+The marketplace allows users to:
+- List NFTs for sale with custom prices
+- Update listing prices
+- Cancel listings
+- Purchase NFTs using USDT
+
+### User Collection Management
+Users can view and manage their NFTs in three categories:
+- Owned NFTs
+- NFTs listed for sale
+- Transaction activity
+
+### Wallet Integration
+Seamless wallet connection using RainbowKit with support for multiple wallets and networks.
+
+## Security Features
+
+- Protection against reentrancy attacks
+- Proper access control for admin functions
+- Fee management system with configurable rates
+- Emergency withdrawal functionality
+- Comprehensive error handling
 
 ## Getting Started
 
@@ -16,21 +82,29 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `/app`: Next.js application code
+  - `/components`: React components
+  - `/utils`: Utility functions and contract hooks
+  - `/create`: NFT creation page
+  - `/my-collection`: User collection management
+- `/contracts`: Solidity smart contracts
+  - `erc721-nft.sol`: NFT contract
+  - `erc20-usdt.sol`: Token contract
+  - `nft-market.sol`: Marketplace contract
+- `/public`: Static assets
 
-## Learn More
+## Development Notes
 
-To learn more about Next.js, take a look at the following resources:
+- The project uses environment-specific configurations for local development (Hardhat) and production (Sepolia)
+- IPFS integration for decentralized storage of NFT images and metadata
+- Responsive design for mobile and desktop users
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Future Improvements
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Add search and filtering functionality
+- Implement auctions and bidding
+- Add royalties for creators
+- Enhance user profiles and social features
+- Support for multiple payment tokens
