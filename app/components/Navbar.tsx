@@ -5,10 +5,26 @@ import { Search, Bell, Menu, X } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+
+  useEffect(() => {
+    const removeScrollLock = () => {
+      document.body.removeAttribute('data-scroll-locked');
+      document.body.style.paddingRight = '0';
+    };
+
+    // Remove immediately if present
+    removeScrollLock();
+
+    // Set up observer for future changes
+    const observer = new MutationObserver(() => removeScrollLock());
+    observer.observe(document.body, { attributes: true });
+
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <header className="px-4 sm:px-8 py-4 border-b border-gray-100 bg-white">
