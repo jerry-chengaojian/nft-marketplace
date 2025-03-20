@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { useReadMarketGetAllNfTs } from '@/app/utils/market'
 import { useReadCollectibleNftTokenUri } from '@/app/utils/collectible-nft'
 import { useState, useEffect } from 'react'
+import { formatUnits } from 'viem';
 
 export function NFTContent() {
   const { data: nfts, isLoading: isLoadingNFTs } = useReadMarketGetAllNfTs()
@@ -75,6 +76,7 @@ function NFTCard({ href, tokenId, address, price }: NFTCardProps) {
   const [metadata, setMetadata] = useState<{
     image?: string;
     title?: string;
+    tags?: string[];
   } | null>(null)
 
   const { data: tokenUri } = useReadCollectibleNftTokenUri({
@@ -105,20 +107,32 @@ function NFTCard({ href, tokenId, address, price }: NFTCardProps) {
       <Card className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 transition-all duration-300 hover:translate-y-[-4px]">
         <div className="relative h-48 w-full">
           <Image 
-            src={metadata.image || '/placeholder.png'}
-            alt={metadata.title || 'NFT'}
+            src={metadata.image || ''}
+            alt={metadata.title + ' #' + tokenId.toString() || 'NFT'}
             fill
             className="object-cover"
           />
         </div>
         <CardContent className="p-4">
-          <h3 className="font-semibold truncate">{metadata.title || `NFT #${tokenId.toString()}`}</h3>
+          <h3 className="font-semibold truncate">{metadata.title + ' #' + tokenId.toString() || `NFT #${tokenId.toString()}`}</h3>
           <div className="flex items-center mt-2">
-            <span className="text-sm text-gray-500">{address}</span>
+            <span className="text-sm text-gray-500">{address.slice(0, 6) + '...' + address.slice(-4)}</span>
           </div>
+          {metadata?.tags && metadata.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-2">
+              {metadata.tags.slice(0, 3).map((tag, index) => (
+                <span 
+                  key={index} 
+                  className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full text-xs"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
           <div className="flex justify-between items-center mt-3">
             <div className="text-xs text-gray-500">Current Price</div>
-            <div className="text-sm font-semibold">{price} USDT</div>
+            <div className="text-sm font-semibold">{formatUnits(BigInt(price), 6)} USDT</div>
           </div>
         </CardContent>
       </Card>
