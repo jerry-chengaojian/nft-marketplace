@@ -1,11 +1,18 @@
+'use client'
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Filter, SortDesc } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useReadMarketGetAllNfTs } from '@/app/utils/market'
+import { useReadCollectibleNftTokenUri } from '@/app/utils/collectible-nft'
+import { useState, useEffect } from 'react'
 
 export function NFTContent() {
+  const { data: nfts, isLoading: isLoadingNFTs } = useReadMarketGetAllNfTs()
+  
   return (
     <div className="flex-1 p-8 overflow-y-auto">
       <div className="flex justify-between items-center mb-8">
@@ -36,35 +43,21 @@ export function NFTContent() {
       
       <div>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {/* NFT Cards */}
-          <NFTCard
-            href="#nft-detail"
-            image="https://images.unsplash.com/photo-1634986666676-ec8fd927c23d"
-            title="Cosmic Perspective #42"
-            address="0x71C...8a3F"
-            price="2.5"
-          />
-          <NFTCard
-            href="#nft-detail"
-            image="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe"
-            title="Digital Dreams #08"
-            address="0x3eA...F42b"
-            price="1.8"
-          />
-          <NFTCard
-            href="#nft-detail"
-            image="https://images.unsplash.com/photo-1614583225154-5fcdda07019e"
-            title="Abstract Motion #15"
-            address="0x8dF...1c7E"
-            price="3.2"
-          />
-          <NFTCard
-            href="#nft-detail"
-            image="https://images.unsplash.com/photo-1633101585272-9e0b0c3d9392"
-            title="Pixel Universe #27"
-            address="0x42A...9bD1"
-            price="1.5"
-          />
+          {isLoadingNFTs ? (
+            <div className="col-span-full text-center py-10">Loading NFTs...</div>
+          ) : nfts && nfts.length > 0 ? (
+            nfts.map((nft) => (
+              <NFTCard
+                key={nft.tokenId}
+                href={`/nft/${nft.tokenId}`}
+                tokenId={nft.tokenId}
+                address={nft.seller}
+                price={nft.price.toString()}
+              />
+            ))
+          ) : (
+            <div className="col-span-full text-center py-10">No NFTs found</div>
+          )}
         </div>
       </div>
     </div>
@@ -73,26 +66,53 @@ export function NFTContent() {
 
 interface NFTCardProps {
   href: string;
-  image: string;
-  title: string;
+  tokenId: bigint;
   address: string;
   price: string;
 }
 
-function NFTCard({ href, image, title, address, price }: NFTCardProps) {
+function NFTCard({ href, tokenId, address, price }: NFTCardProps) {
+  const [metadata, setMetadata] = useState<{
+    image?: string;
+    title?: string;
+  } | null>(null)
+
+  const { data: tokenUri } = useReadCollectibleNftTokenUri({
+    args: [tokenId],
+  })
+
+  useEffect(() => {
+    async function fetchMetadata() {
+      if (!tokenUri) return
+      try {
+        const response = await fetch(tokenUri)
+        const data = await response.json()
+        setMetadata(data)
+      } catch (error) {
+        console.error('Error fetching NFT metadata:', error)
+      }
+    }
+
+    fetchMetadata()
+  }, [tokenUri])
+
+  if (!metadata) {
+    return <div>Loading...</div>
+  }
+
   return (
     <Link href={href}>
       <Card className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 transition-all duration-300 hover:translate-y-[-4px]">
         <div className="relative h-48 w-full">
           <Image 
-            src={image}
-            alt={title}
+            src={metadata.image || '/placeholder.png'}
+            alt={metadata.title || 'NFT'}
             fill
             className="object-cover"
           />
         </div>
         <CardContent className="p-4">
-          <h3 className="font-semibold truncate">{title}</h3>
+          <h3 className="font-semibold truncate">{metadata.title || `NFT #${tokenId.toString()}`}</h3>
           <div className="flex items-center mt-2">
             <span className="text-sm text-gray-500">{address}</span>
           </div>
