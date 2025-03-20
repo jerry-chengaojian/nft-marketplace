@@ -3,6 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import Image from 'next/image';
 import Link from 'next/link';
 import { NFTContent } from './components/ntf-content';
+import { RecentlyListedNFTs } from './components/recently-listed-nfts';
 
 export default function Home() {
   return (
@@ -16,9 +17,11 @@ export default function Home() {
             <Button className="px-6 py-3 bg-white text-indigo-600 font-semibold rounded-xl hover:bg-gray-100 transition-colors">
               Explore Collection
             </Button>
-            <Button variant="outline" className="px-6 py-3 bg-transparent border border-white text-white font-semibold rounded-xl hover:bg-white/10 transition-colors">
-              Create NFT
-            </Button>
+            <Link href="/create">
+              <Button variant="outline" className="px-6 py-3 bg-transparent border border-white text-white font-semibold rounded-xl hover:bg-white/10 transition-colors">
+                Create NFT
+              </Button>
+            </Link>
           </div>
         </div>
         <div className="w-1/2 pl-10">
@@ -50,77 +53,7 @@ export default function Home() {
         <NFTContent />
         
         {/* Sidebar */}
-        <div className="hidden lg:block w-80 border-l border-gray-100 p-6 bg-white">
-          <h2 className="text-lg font-bold mb-4">Recently Listed</h2>
-          
-          <div className="space-y-4">
-            <Link href="#nft-detail" className="block">
-              <Card className="bg-white p-3 rounded-xl border border-gray-100 hover:border-indigo-200 transition-colors">
-                <CardContent className="p-0 flex items-center">
-                  <div className="relative w-16 h-16 rounded-lg mr-3 overflow-hidden">
-                    <Image 
-                      src="https://images.unsplash.com/photo-1614583225154-5fcdda07019e" 
-                      alt="Abstract Motion #15"
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold">Abstract Motion #15</h3>
-                    <div className="flex justify-between items-center mt-1">
-                      <div className="text-xs text-gray-500">Listed 2h ago</div>
-                      <div className="text-sm font-semibold">3.2 USDT</div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-            
-            <Link href="#nft-detail" className="block">
-              <Card className="bg-white p-3 rounded-xl border border-gray-100 hover:border-indigo-200 transition-colors">
-                <CardContent className="p-0 flex items-center">
-                  <div className="relative w-16 h-16 rounded-lg mr-3 overflow-hidden">
-                    <Image 
-                      src="https://images.unsplash.com/photo-1633101585272-9e0b0c3d9392" 
-                      alt="Pixel Universe #27"
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold">Pixel Universe #27</h3>
-                    <div className="flex justify-between items-center mt-1">
-                      <div className="text-xs text-gray-500">Listed 5h ago</div>
-                      <div className="text-sm font-semibold">1.5 USDT</div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-            
-            <Link href="#nft-detail" className="block">
-              <Card className="bg-white p-3 rounded-xl border border-gray-100 hover:border-indigo-200 transition-colors">
-                <CardContent className="p-0 flex items-center">
-                  <div className="relative w-16 h-16 rounded-lg mr-3 overflow-hidden">
-                    <Image 
-                      src="https://images.unsplash.com/photo-1612336307429-8a898d10e223" 
-                      alt="Neon Dreamscape #12"
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold">Neon Dreamscape #12</h3>
-                    <div className="flex justify-between items-center mt-1">
-                      <div className="text-xs text-gray-500">Listed 8h ago</div>
-                      <div className="text-sm font-semibold">4.0 USDT</div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          </div>
-        </div>
+        <RecentlyListedNFTs />
       </div>
     </div>
   );

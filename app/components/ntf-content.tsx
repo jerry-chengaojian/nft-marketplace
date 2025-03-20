@@ -14,6 +14,7 @@ import { formatUnits } from 'viem';
 export function NFTContent() {
   const { data: nfts, isLoading: isLoadingNFTs } = useReadMarketGetAllNfTs()
   const [selectedTag, setSelectedTag] = useState('all')
+  const [sortAscending, setSortAscending] = useState(true)
   const [topTags, setTopTags] = useState<string[]>(['all'])
   const [filteredNFTs, setFilteredNFTs] = useState<typeof nfts>([])
   const [allMetadataTags, setAllMetadataTags] = useState<Map<string, string[]>>(new Map())
@@ -59,19 +60,25 @@ export function NFTContent() {
     })
   }, [])
 
-  // Filter NFTs based on selected tag
+  // Update the filtering effect to include sorting
   useEffect(() => {
     if (!nfts) return
     
+    let sorted = [...(nfts || [])]
+    sorted.sort((a, b) => sortAscending 
+      ? Number(a.tokenId - b.tokenId)
+      : Number(b.tokenId - a.tokenId)
+    )
+    
     if (selectedTag === 'all') {
-      setFilteredNFTs(nfts)
+      setFilteredNFTs(sorted)
     } else {
-      const filtered = nfts.filter(nft => 
+      const filtered = sorted.filter(nft => 
         allMetadataTags.get(nft.tokenId.toString())?.includes(selectedTag)
       )
       setFilteredNFTs(filtered)
     }
-  }, [selectedTag, nfts, allMetadataTags])
+  }, [selectedTag, nfts, allMetadataTags, sortAscending])
 
   return (
     <div className="flex-1 p-8 overflow-y-auto">
@@ -82,9 +89,13 @@ export function NFTContent() {
             <Filter className="h-4 w-4" />
             <span>Filter</span>
           </Button>
-          <Button variant="outline" className="flex items-center space-x-2">
-            <SortDesc className="h-4 w-4" />
-            <span>Sort by: Recent</span>
+          <Button 
+            variant="outline" 
+            className="flex items-center space-x-2"
+            onClick={() => setSortAscending(!sortAscending)}
+          >
+            <SortDesc className={`h-4 w-4 transition-transform ${sortAscending ? 'rotate-180' : ''}`} />
+            <span>Sort by: {sortAscending ? 'Earliest' : 'Recent'}</span>
           </Button>
         </div>
       </div>
