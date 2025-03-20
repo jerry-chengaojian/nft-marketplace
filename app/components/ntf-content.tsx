@@ -8,12 +8,71 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useReadMarketGetAllNfTs } from '@/app/utils/market'
 import { useReadCollectibleNftTokenUri } from '@/app/utils/collectible-nft'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { formatUnits } from 'viem';
 
 export function NFTContent() {
   const { data: nfts, isLoading: isLoadingNFTs } = useReadMarketGetAllNfTs()
-  
+  const [selectedTag, setSelectedTag] = useState('all')
+  const [topTags, setTopTags] = useState<string[]>(['all'])
+  const [filteredNFTs, setFilteredNFTs] = useState<typeof nfts>([])
+  const [allMetadataTags, setAllMetadataTags] = useState<Map<string, string[]>>(new Map())
+
+  // Set initial filtered NFTs when nfts data loads
+  useEffect(() => {
+    if (nfts) {
+      setFilteredNFTs(nfts)
+    }
+  }, [nfts])
+
+  // Calculate top tags whenever metadata is updated
+  useEffect(() => {
+    if (!nfts) return
+
+    const tagCounts = new Map<string, number>()
+    tagCounts.set('all', nfts.length)
+
+    // Count occurrences of each tag
+    allMetadataTags.forEach((tags) => {
+      tags.forEach(tag => {
+        tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1)
+      })
+    })
+
+    // Sort tags by count and get top 6
+    const sortedTags = Array.from(tagCounts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .map(([tag]) => tag)
+      .slice(0, 7)
+
+    if (JSON.stringify(sortedTags) !== JSON.stringify(topTags)) {
+      setTopTags(sortedTags)
+    }
+  }, [allMetadataTags, nfts])
+
+  // Memoize the updateNFTMetadata callback
+  const updateNFTMetadata = useCallback((tokenId: string, tags: string[]) => {
+    setAllMetadataTags(prev => {
+      const newMap = new Map(prev)
+      newMap.set(tokenId, tags)
+      return newMap
+    })
+  }, [])
+
+  // Filter NFTs based on selected tag
+  useEffect(() => {
+    if (!nfts) return
+    
+    if (selectedTag === 'all') {
+      setFilteredNFTs(nfts)
+    } else {
+      const filtered = nfts.filter(nft => 
+        allMetadataTags.get(nft.tokenId.toString())?.includes(selectedTag)
+      )
+      setFilteredNFTs(filtered)
+    }
+  }, [selectedTag, nfts, allMetadataTags])
+
   return (
     <div className="flex-1 p-8 overflow-y-auto">
       <div className="flex justify-between items-center mb-8">
@@ -30,15 +89,17 @@ export function NFTContent() {
         </div>
       </div>
       
-      <Tabs defaultValue="all" className="mb-8">
+      <Tabs value={selectedTag} onValueChange={setSelectedTag} className="mb-8">
         <TabsList className="bg-transparent">
-          <TabsTrigger value="all" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white rounded-full px-5 py-2 mr-3">All NFTs</TabsTrigger>
-          <TabsTrigger value="art" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white rounded-full px-5 py-2 mr-3">Art</TabsTrigger>
-          <TabsTrigger value="collectibles" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white rounded-full px-5 py-2 mr-3">Collectibles</TabsTrigger>
-          <TabsTrigger value="music" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white rounded-full px-5 py-2 mr-3">Music</TabsTrigger>
-          <TabsTrigger value="photography" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white rounded-full px-5 py-2 mr-3">Photography</TabsTrigger>
-          <TabsTrigger value="virtual" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white rounded-full px-5 py-2 mr-3">Virtual Worlds</TabsTrigger>
-          <TabsTrigger value="sports" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white rounded-full px-5 py-2 mr-3">Sports</TabsTrigger>
+          {topTags.map((tag) => (
+            <TabsTrigger
+              key={tag}
+              value={tag}
+              className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white rounded-full px-5 py-2 mr-3"
+            >
+              {tag === 'all' ? 'All NFTs' : tag}
+            </TabsTrigger>
+          ))}
         </TabsList>
       </Tabs>
       
@@ -46,14 +107,15 @@ export function NFTContent() {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {isLoadingNFTs ? (
             <div className="col-span-full text-center py-10">Loading NFTs...</div>
-          ) : nfts && nfts.length > 0 ? (
-            nfts.map((nft) => (
+          ) : filteredNFTs && filteredNFTs.length > 0 ? (
+            filteredNFTs.map((nft) => (
               <NFTCard
                 key={nft.tokenId}
                 href={`/nft/${nft.tokenId}`}
                 tokenId={nft.tokenId}
                 address={nft.seller}
                 price={nft.price.toString()}
+                onMetadataLoad={(tags) => updateNFTMetadata(nft.tokenId.toString(), tags)}
               />
             ))
           ) : (
@@ -70,9 +132,10 @@ interface NFTCardProps {
   tokenId: bigint;
   address: string;
   price: string;
+  onMetadataLoad: (tags: string[]) => void;
 }
 
-function NFTCard({ href, tokenId, address, price }: NFTCardProps) {
+function NFTCard({ href, tokenId, address, price, onMetadataLoad }: NFTCardProps) {
   const [metadata, setMetadata] = useState<{
     image?: string;
     title?: string;
@@ -84,19 +147,30 @@ function NFTCard({ href, tokenId, address, price }: NFTCardProps) {
   })
 
   useEffect(() => {
+    let isMounted = true
+
     async function fetchMetadata() {
       if (!tokenUri) return
       try {
         const response = await fetch(tokenUri)
         const data = await response.json()
-        setMetadata(data)
+        if (isMounted) {
+          setMetadata(data)
+          if (data.tags) {
+            onMetadataLoad(data.tags)
+          }
+        }
       } catch (error) {
         console.error('Error fetching NFT metadata:', error)
       }
     }
 
     fetchMetadata()
-  }, [tokenUri])
+
+    return () => {
+      isMounted = false
+    }
+  }, [tokenUri, onMetadataLoad])
 
   if (!metadata) {
     return <div>Loading...</div>
