@@ -10,7 +10,7 @@ import { formatUnits } from 'viem'
 
 interface NFTMetadata {
   image?: string;
-  title?: string;
+  name?: string;
 }
 
 export function RecentlyListedNFTs() {
@@ -97,13 +97,13 @@ function RecentNFTCard({ tokenId, price }: { tokenId: bigint; price: bigint }) {
           <div className="relative w-16 h-16 rounded-lg mr-3 overflow-hidden">
             <Image 
               src={metadata.image || ''}
-              alt={metadata.title || `NFT #${tokenId}`}
+              alt={metadata.name || `NFT #${tokenId}`}
               fill
               className="object-cover"
             />
           </div>
           <div className="flex-1">
-            <h3 className="font-semibold">{metadata.title + ' #' + tokenId.toString() || `NFT #${tokenId.toString()}`}</h3>
+            <h3 className="font-semibold">{metadata.name + ' #' + tokenId.toString() || `NFT #${tokenId.toString()}`}</h3>
             <div className="flex justify-between items-center mt-1">
               <div className="text-xs text-gray-500">Recently Listed</div>
               <div className="text-sm font-semibold">{formatUnits(price, 6)} USDT</div>

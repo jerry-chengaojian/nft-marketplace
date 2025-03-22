@@ -25,15 +25,20 @@ import {
   CustomDialogContent
 } from '@/components/ui/custom-dialog'
 
+type MetadataAttribute = {
+  trait_type: string
+  value: string
+}
+
 type NFT = {
   id: number
   name: string
   image: string
+  description: string
+  category: string
+  tags: string[]
   status: 'owned' | 'listed'
   price: string | null
-  description?: string
-  category?: string
-  tags?: string[]
 }
 
 export default function OwnedNFTs() {
@@ -99,13 +104,17 @@ export default function OwnedNFTs() {
                   if (response.ok) {
                     const metadata = await response.json()
                     
+                    // Extract category and tags from attributes
+                    const categoryAttribute = metadata.attributes?.find((attr: MetadataAttribute) => attr.trait_type === 'Category')
+                    const tagAttributes = metadata.attributes?.filter((attr: MetadataAttribute) => attr.trait_type === 'Tag') || []
+                    
                     nfts.push({
                       id: Number(tokenId),
-                      name: `${metadata.title} #${tokenId}`,
-                      image: metadata.image,
-                      description: metadata.description,
-                      category: metadata.category,
-                      tags: metadata.tags,
+                      name: metadata.name + ` #${tokenId}` || `NFT #${tokenId}`,
+                      image: metadata.image || 'https://placehold.co/600x400?text=NFT+Image',
+                      description: metadata.description || '',
+                      category: categoryAttribute?.value || '',
+                      tags: tagAttributes.map((tag: MetadataAttribute) => tag.value),
                       status: 'owned',
                       price: null
                     })

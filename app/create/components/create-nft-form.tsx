@@ -63,7 +63,7 @@ export function CreateNFTForm() {
         title: 'Invalid File Type',
         description: 'Please upload PNG, JPG, GIF, SVG, MP4, or WEBM',
         variant: 'error',
-        position: 'top-left'
+        position: 'bottom-right'
       })
       return
     }
@@ -72,7 +72,7 @@ export function CreateNFTForm() {
         title: 'File Too Large',
         description: 'Maximum file size is 100MB',
         variant: 'error',
-        position: 'top-left'
+        position: 'bottom-right'
       })
       return
     }
@@ -91,7 +91,7 @@ export function CreateNFTForm() {
         title: 'Error',
         description: 'Failed to upload file to IPFS. Please try again.',
         variant: 'error',
-        position: 'top-left'
+        position: 'bottom-right'
       })
     } finally {
       setIsUploading(false)
@@ -126,7 +126,7 @@ export function CreateNFTForm() {
         title: 'Validation Error',
         description: 'Please fill in all required fields and connect your wallet',
         variant: 'error',
-        position: 'top-left'
+        position: 'bottom-right'
       })
       return
     }
@@ -140,7 +140,7 @@ export function CreateNFTForm() {
         title: 'Network Error',
         description: `Please switch to the ${networkName} network to mint NFTs`,
         variant: 'warning',
-        position: 'top-left'
+        position: 'bottom-right'
       })
       
       // Offer to switch networks automatically
@@ -156,11 +156,20 @@ export function CreateNFTForm() {
     try {
       setIsMetadataUploading(true)
       const metadata = {
-        image: ipfsUrl,
-        title,
+        name: title,
         description,
-        category,
-        tags: tags,
+        image: ipfsUrl,
+        external_url: ipfsUrl,
+        attributes: [
+          {
+            trait_type: "Category",
+            value: categories.find(c => c.value === category)?.label || category
+          },
+          ...tags.map(tag => ({
+            trait_type: "Tag",
+            value: tag
+          }))
+        ]
       }
 
       const blob = new Blob([JSON.stringify(metadata)], { type: 'application/json' })
@@ -178,7 +187,7 @@ export function CreateNFTForm() {
             title: 'NFT Created Successfully!',
             description: 'Your NFT has been minted and metadata uploaded to IPFS.',
             variant: 'success',
-            position: 'top-left'
+            position: 'bottom-right'
           })
           // Reset form
           setTitle('')
@@ -193,7 +202,7 @@ export function CreateNFTForm() {
             title: 'Failed to Mint NFT',
             description: 'There was an error while minting your NFT. Please try again.',
             variant: 'error',
-            position: 'top-left'
+            position: 'bottom-right'
           })
         }
       })
@@ -204,7 +213,7 @@ export function CreateNFTForm() {
         title: 'Error',
         description: 'Failed to create NFT. Please try again.',
         variant: 'error',
-        position: 'top-left'
+        position: 'bottom-right'
       })
     } finally {
       setIsMetadataUploading(false)

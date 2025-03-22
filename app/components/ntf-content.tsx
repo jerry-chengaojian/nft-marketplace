@@ -11,6 +11,12 @@ import { useReadCollectibleNftTokenUri } from '@/app/utils/collectible-nft'
 import { useState, useEffect, useCallback } from 'react'
 import { formatUnits } from 'viem';
 
+// Add type definition at the top
+type MetadataAttribute = {
+  trait_type: string
+  value: string
+}
+
 export function NFTContent() {
   const { data: nfts, isLoading: isLoadingNFTs } = useReadMarketGetAllNfTs()
   const [selectedTag, setSelectedTag] = useState('all')
@@ -109,10 +115,11 @@ interface NFTCardProps {
 
 function NFTCard({ href, tokenId, address, price, selectCategory }: NFTCardProps) {
   const [metadata, setMetadata] = useState<{
-    image?: string;
-    title?: string;
-    category?: string;
-    tags?: string[];
+    name: string
+    description: string
+    image: string
+    external_url: string
+    attributes: MetadataAttribute[]
   } | null>(null)
 
   const { data: tokenUri } = useReadCollectibleNftTokenUri({
@@ -146,9 +153,16 @@ function NFTCard({ href, tokenId, address, price, selectCategory }: NFTCardProps
     return <div>Loading...</div>
   }
 
-  if (selectCategory !== 'all' && metadata.category !== selectCategory) {
+  const matchesCategory = selectCategory === 'all' || metadata.attributes?.some(attr => 
+    (attr.trait_type.toLowerCase() === 'category' || attr.trait_type.toLowerCase() === 'type') && 
+    attr.value.toLowerCase() === selectCategory.toLowerCase()
+  )
+
+  if (!matchesCategory) {
     return null
   }
+
+  const tagAttributes = metadata.attributes?.filter(attr => attr.trait_type === 'Tag') || []
 
   return (
     <Link href={href}>
@@ -156,28 +170,26 @@ function NFTCard({ href, tokenId, address, price, selectCategory }: NFTCardProps
         <div className="relative h-48 w-full">
           <Image 
             src={metadata.image || ''}
-            alt={metadata.title + ' #' + tokenId.toString() || 'NFT'}
+            alt={metadata.name + ' #' + tokenId.toString() || 'NFT'}
             fill
             className="object-cover"
           />
         </div>
         <CardContent className="p-4">
-          <h3 className="font-semibold truncate">{metadata.title + ' #' + tokenId.toString() || `NFT #${tokenId.toString()}`}</h3>
-          <div className="flex items-center mt-2">
-            <span className="text-sm text-gray-500">{address.slice(0, 6) + '...' + address.slice(-4)}</span>
-          </div>
-          {metadata?.tags && metadata.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-2">
-              {metadata.tags.slice(0, 3).map((tag, index) => (
-                <span 
-                  key={index} 
-                  className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full text-xs"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
+          <h3 className="font-semibold truncate">{metadata.name + ' #' + tokenId.toString()}</h3>
+          {metadata.description && (
+            <p className="text-sm text-gray-500 mt-1 line-clamp-2">{metadata.description}</p>
           )}
+          <div className="flex flex-wrap gap-1 mt-2">
+            {tagAttributes.slice(0, 3).map((tag, index) => (
+              <span 
+                key={index} 
+                className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full text-xs"
+              >
+                {tag.value}
+              </span>
+            ))}
+          </div>
           <div className="flex justify-between items-center mt-3">
             <div className="text-xs text-gray-500">Current Price</div>
             <div className="text-sm font-semibold">{formatUnits(BigInt(price), 6)} USDT</div>

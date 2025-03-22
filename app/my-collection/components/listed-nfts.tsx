@@ -26,6 +26,11 @@ import {
   CustomDialogContent
 } from '@/components/ui/custom-dialog'
 
+type MetadataAttribute = {
+  trait_type: string
+  value: string
+}
+
 type NFT = {
   id: number
   name: string
@@ -77,9 +82,14 @@ export default function ListedNFTs() {
           })
 
           // Fetch metadata from the token URI
-          let metadata = { name: `NFT #${nft.tokenId.toString()}`, image: '' }
+          let metadata = { 
+            name: `NFT #${nft.tokenId.toString()}`, 
+            image: '',
+            description: '',
+            external_url: '',
+            attributes: [] as MetadataAttribute[]
+          }
           try {
-            // If the URI is IPFS or HTTP, fetch the metadata
             if (tokenUri) {
               const response = await fetch(tokenUri)
               if (response.ok) {
@@ -90,10 +100,17 @@ export default function ListedNFTs() {
             console.error('Error fetching metadata:', err)
           }
 
+          // Extract category and tags from attributes if they exist
+          const categoryAttribute = metadata.attributes?.find(attr => attr.trait_type === 'Category')
+          const tagAttributes = metadata.attributes?.filter(attr => attr.trait_type === 'Tag') || []
+
           return {
             id: Number(nft.tokenId),
             name: metadata.name,
             image: metadata.image || 'https://placehold.co/600x400?text=NFT+Image',
+            description: metadata.description,
+            category: categoryAttribute?.value || '',
+            tags: tagAttributes.map(tag => tag.value),
             status: 'listed',
             price: formatUnits(nft.price, 6)
           } as NFT
@@ -275,7 +292,6 @@ export default function ListedNFTs() {
           <div key={nft.id} className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 transition-all duration-300 hover:translate-y-[-4px]">
             <div className="h-48 bg-cover bg-center" style={{ backgroundImage: `url('${nft.image}')` }}></div>
             <div className="p-4">
-              <h3 className="font-semibold truncate">{nft.name}</h3>
               <div className="flex justify-between items-center mt-3">
                 <div className="text-xs text-gray-500">Listed for</div>
                 <div className="text-sm font-semibold">{nft.price} USDT</div>
