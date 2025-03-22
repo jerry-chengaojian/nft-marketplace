@@ -15,52 +15,22 @@ export function NFTContent() {
   const { data: nfts, isLoading: isLoadingNFTs } = useReadMarketGetAllNfTs()
   const [selectedTag, setSelectedTag] = useState('all')
   const [sortAscending, setSortAscending] = useState(true)
-  const [topTags, setTopTags] = useState<string[]>(['all'])
   const [filteredNFTs, setFilteredNFTs] = useState<typeof nfts>([])
   const [allMetadataTags, setAllMetadataTags] = useState<Map<string, string[]>>(new Map())
 
-  // Set initial filtered NFTs when nfts data loads
-  useEffect(() => {
-    if (nfts) {
-      setFilteredNFTs(nfts)
-    }
-  }, [nfts])
+  // Define fixed categories
+  const categories = [
+    { value: 'all', label: 'All NFTs' },
+    { value: 'art', label: 'Art' },
+    { value: 'collectibles', label: 'Collectibles' },
+    { value: 'music', label: 'Music' },
+    { value: 'photography', label: 'Photography' },
+    { value: 'virtual-worlds', label: 'Virtual Worlds' },
+    { value: 'sports', label: 'Sports' },
+    { value: 'utility', label: 'Utility' },
+  ]
 
-  // Calculate top tags whenever metadata is updated
-  useEffect(() => {
-    if (!nfts) return
-
-    const tagCounts = new Map<string, number>()
-    tagCounts.set('all', nfts.length)
-
-    // Count occurrences of each tag
-    allMetadataTags.forEach((tags) => {
-      tags.forEach(tag => {
-        tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1)
-      })
-    })
-
-    // Sort tags by count and get top 6
-    const sortedTags = Array.from(tagCounts.entries())
-      .sort((a, b) => b[1] - a[1])
-      .map(([tag]) => tag)
-      .slice(0, 7)
-
-    if (JSON.stringify(sortedTags) !== JSON.stringify(topTags)) {
-      setTopTags(sortedTags)
-    }
-  }, [allMetadataTags, nfts])
-
-  // Memoize the updateNFTMetadata callback
-  const updateNFTMetadata = useCallback((tokenId: string, tags: string[]) => {
-    setAllMetadataTags(prev => {
-      const newMap = new Map(prev)
-      newMap.set(tokenId, tags)
-      return newMap
-    })
-  }, [])
-
-  // Update the filtering effect to include sorting
+  // Update the filtering effect
   useEffect(() => {
     if (!nfts) return
     
@@ -73,9 +43,7 @@ export function NFTContent() {
     if (selectedTag === 'all') {
       setFilteredNFTs(sorted)
     } else {
-      const filtered = sorted.filter(nft => 
-        allMetadataTags.get(nft.tokenId.toString())?.includes(selectedTag)
-      )
+      const filtered = sorted.filter(nft => nft)
       setFilteredNFTs(filtered)
     }
   }, [selectedTag, nfts, allMetadataTags, sortAscending])
@@ -102,13 +70,13 @@ export function NFTContent() {
       
       <Tabs value={selectedTag} onValueChange={setSelectedTag} className="mb-8">
         <TabsList className="bg-transparent">
-          {topTags.map((tag) => (
+          {categories.map((cat) => (
             <TabsTrigger
-              key={tag}
-              value={tag}
+              key={cat.value}
+              value={cat.value}
               className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white rounded-full px-5 py-2 mr-3"
             >
-              {tag === 'all' ? 'All NFTs' : tag}
+              {cat.label}
             </TabsTrigger>
           ))}
         </TabsList>
@@ -126,7 +94,6 @@ export function NFTContent() {
                 tokenId={nft.tokenId}
                 address={nft.seller}
                 price={nft.price.toString()}
-                onMetadataLoad={(tags) => updateNFTMetadata(nft.tokenId.toString(), tags)}
               />
             ))
           ) : (
@@ -143,10 +110,9 @@ interface NFTCardProps {
   tokenId: bigint;
   address: string;
   price: string;
-  onMetadataLoad: (tags: string[]) => void;
 }
 
-function NFTCard({ href, tokenId, address, price, onMetadataLoad }: NFTCardProps) {
+function NFTCard({ href, tokenId, address, price }: NFTCardProps) {
   const [metadata, setMetadata] = useState<{
     image?: string;
     title?: string;
@@ -167,9 +133,6 @@ function NFTCard({ href, tokenId, address, price, onMetadataLoad }: NFTCardProps
         const data = await response.json()
         if (isMounted) {
           setMetadata(data)
-          if (data.tags) {
-            onMetadataLoad(data.tags)
-          }
         }
       } catch (error) {
         console.error('Error fetching NFT metadata:', error)
@@ -181,7 +144,7 @@ function NFTCard({ href, tokenId, address, price, onMetadataLoad }: NFTCardProps
     return () => {
       isMounted = false
     }
-  }, [tokenUri, onMetadataLoad])
+  }, [tokenUri])
 
   if (!metadata) {
     return <div>Loading...</div>
