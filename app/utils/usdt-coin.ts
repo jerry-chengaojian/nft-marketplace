@@ -178,8 +178,8 @@ export const usdtCoinAbi = [
  
  */
 export const usdtCoinAddress = {
-  1: '0x314159265dD8dbb310642f98f50C066173C1259b',
-  5: '0x112234455C3a32FD11230C42E7Bccd4A84e02010',
+  31337: process.env.NEXT_PUBLIC_USDT_ADDRESS as `0x${string}`,
+  5: process.env.NEXT_PUBLIC_USDT_ADDRESS as `0x${string}`,
 } as const
 
 /**

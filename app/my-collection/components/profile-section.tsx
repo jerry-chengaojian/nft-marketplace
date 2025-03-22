@@ -4,6 +4,8 @@ import Link from 'next/link'
 import { useAccount, useBalance } from 'wagmi'
 import { useReadCollectibleNftBalanceOf } from '../../utils/collectible-nft'
 import { useReadMarketGetMyNfTs } from '../../utils/market'
+import { useReadUsdtCoinBalanceOf } from '../../utils/usdt-coin'
+import { formatUnits } from 'viem'
 import { useState, useEffect } from 'react'
 
 export default function ProfileSection() {
@@ -14,6 +16,14 @@ export default function ProfileSection() {
   // Fetch ETH balance
   const { data: balanceData, isError: balanceError } = useBalance({
     address,
+    query: {
+      enabled: isConnected && !!address,
+    }
+  })
+
+  // Fetch USDT balance
+  const { data: usdtBalanceData, isError: usdtBalanceError } = useReadUsdtCoinBalanceOf({
+    args: address ? [address] : undefined,
     query: {
       enabled: isConnected && !!address,
     }
@@ -69,8 +79,8 @@ export default function ProfileSection() {
           </div>
         </div>
         
-        <div className="flex flex-wrap gap-6">
-          <div className="text-center">
+        <div className="flex flex-wrap gap-4 md:gap-6 justify-center md:justify-start">
+          <div className="text-center min-w-[120px]">
             {isLoading ? (
               <div className="text-2xl font-bold animate-pulse">Loading...</div>
             ) : balanceError ? (
@@ -80,9 +90,41 @@ export default function ProfileSection() {
                 {balanceData ? `${Number(balanceData.formatted).toFixed(4)} ${balanceData.symbol}` : '0 ETH'}
               </div>
             )}
-            <div className="text-sm text-gray-500">Balance</div>
+            <div className="text-sm text-gray-500">ETH Balance</div>
+          </div>         
+
+          <div className="text-center min-w-[120px]">
+            {isLoading ? (
+              <div className="text-2xl font-bold animate-pulse">Loading...</div>
+            ) : usdtBalanceError ? (
+              <div className="text-2xl font-bold text-red-500">Error</div>
+            ) : (
+              <div className="relative group">
+                <div className="text-2xl font-bold truncate max-w-[150px]" title={usdtBalanceData 
+                  ? `${Number(formatUnits(usdtBalanceData, 6)).toLocaleString(undefined, {
+                      maximumFractionDigits: 2
+                    })} USDT` 
+                  : '0.00 USDT'}>
+                  {usdtBalanceData 
+                    ? `${Number(formatUnits(usdtBalanceData, 6)).toLocaleString(undefined, {
+                        maximumFractionDigits: 2,
+                        minimumFractionDigits: 2
+                      })} USDT` 
+                    : '0.00 USDT'}
+                </div>
+                <div className="absolute z-10 scale-0 group-hover:scale-100 transition-all duration-200 bg-gray-800 text-white text-sm rounded py-1 px-2 -top-8 left-1/2 transform -translate-x-1/2 whitespace-nowrap">
+                  {usdtBalanceData 
+                    ? `${Number(formatUnits(usdtBalanceData, 6)).toLocaleString(undefined, {
+                        maximumFractionDigits: 6
+                      })} USDT` 
+                    : '0.00 USDT'}
+                </div>
+              </div>
+            )}
+            <div className="text-sm text-gray-500">USDT Balance</div>
           </div>
-          <div className="text-center">
+
+          <div className="text-center min-w-[100px]">
             {isLoading ? (
               <div className="text-2xl font-bold animate-pulse">Loading...</div>
             ) : nftBalanceError ? (
@@ -90,9 +132,10 @@ export default function ProfileSection() {
             ) : (
               <div className="text-2xl font-bold">{nftCount !== null ? nftCount : '0'}</div>
             )}
-            <div className="text-sm text-gray-500">Owned</div>
+            <div className="text-sm text-gray-500">Owned NFTs</div>
           </div>
-          <div className="text-center">
+          
+          <div className="text-center min-w-[100px]">
             {isLoading ? (
               <div className="text-2xl font-bold animate-pulse">Loading...</div>
             ) : listedNftsError ? (
@@ -100,7 +143,7 @@ export default function ProfileSection() {
             ) : (
               <div className="text-2xl font-bold">{myListedNfts ? myListedNfts.length : '0'}</div>
             )}
-            <div className="text-sm text-gray-500">On Sale</div>
+            <div className="text-sm text-gray-500">NFTs On Sale</div>
           </div>
         </div>
       </div>
