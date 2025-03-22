@@ -5,9 +5,11 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { ArrowLeft, Heart, Share, ExternalLink } from 'lucide-react'
-import { useReadCollectibleNftTokenUri, useReadCollectibleNftOwnerOf } from '@/app/utils/collectible-nft'
+import { useReadCollectibleNftTokenUri } from '@/app/utils/collectible-nft'
+import { useReadMarketOrderOfId } from '@/app/utils/market'
 import { useState, useEffect } from 'react'
 import { use } from 'react'
+import { formatUnits } from 'viem'
 
 // Add these type definitions at the top of the file
 interface Attribute {
@@ -23,12 +25,19 @@ interface NFTMetadata {
   attributes: Attribute[];
 }
 
+// Add this helper function at the top of the file
+const truncateAddress = (address: string) => {
+  if (!address || address === 'Unknown Owner') return address;
+  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+};
+
 function NFTDetailContent({ tokenId }: { tokenId: string }) {
   const { data: tokenUri, isLoading: isLoadingUri } = useReadCollectibleNftTokenUri({
     args: [BigInt(tokenId)],
   })
-  
-  const { data: owner, isLoading: isLoadingOwner } = useReadCollectibleNftOwnerOf({
+
+  // Add marketplace order query
+  const { data: orderData, isLoading: isLoadingOrder } = useReadMarketOrderOfId({
     args: [BigInt(tokenId)],
   })
 
@@ -54,7 +63,7 @@ function NFTDetailContent({ tokenId }: { tokenId: string }) {
     fetchMetadata()
   }, [tokenUri])
 
-  if (isLoadingUri || isLoadingOwner || isLoadingMetadata) {
+  if (isLoadingUri || isLoadingMetadata || isLoadingOrder) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>
   }
 
@@ -64,27 +73,14 @@ function NFTDetailContent({ tokenId }: { tokenId: string }) {
     name: nftMetadata?.name || `NFT #${tokenId}`,
     description: nftMetadata?.description || 'No description available',
     image: nftMetadata?.image || '/placeholder.jpg',
-    creator: {
-      name: '@creator',
-      avatar: '/avatar-placeholder.jpg',
-      verified: true
-    },
-    owner: {
-      name: owner || 'Unknown Owner',
-      avatar: '/avatar-placeholder.jpg'
-    },
-    collection: {
-      name: 'NFT Collection',
-      image: '/collection-placeholder.jpg'
-    },
     price: {
-      amount: 'Not for sale',
+      amount: orderData?.[2] ? formatUnits(orderData[2], 6) : 'Not for sale',
       currency: 'USDT',
-      usdEquivalent: '-'
     },
     tags: nftMetadata?.attributes?.filter((attr: Attribute) => attr.trait_type === "Tag").map(attr => attr.value) || ['NFT'],
     details: {
-      contractAddress: process.env.NEXT_PUBLIC_COLLECTIBLE_NFT_ADDRESS,
+      contractAddress: process.env.NEXT_PUBLIC_COLLECTIBLE_NFT_ADDRESS || '',
+      owner: orderData?.[0] || 'Unknown Owner',
       tokenId: tokenId,
       tokenStandard: 'ERC-721',
       blockchain: process.env.NODE_ENV === 'production' ? 'Sepolia' : 'Hardhat',
@@ -159,15 +155,6 @@ function NFTDetailContent({ tokenId }: { tokenId: string }) {
               </div>
             </div>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
-              <div className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
-                <div className="text-gray-500 text-sm">Owner</div>
-                <div className="flex items-center mt-2">
-                  <span className="font-medium">{nft.owner.name}</span>
-                </div>
-              </div>
-            </div>
-            
             <div className="mb-6">
               <h2 className="text-xl font-bold mb-3">Description</h2>
               <div className="text-gray-700 whitespace-pre-line">
@@ -187,7 +174,12 @@ function NFTDetailContent({ tokenId }: { tokenId: string }) {
                 {Object.entries(nft.details).map(([key, value], index) => (
                   <div key={index} className="flex justify-between py-2 border-b border-gray-100">
                     <div className="text-gray-500">{key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</div>
-                    <div className="text-gray-900 font-medium">{value}</div>
+                    <div 
+                      className="text-gray-900 font-medium hover:cursor-pointer"
+                      title={['contractAddress', 'owner'].includes(key) ? value : undefined}
+                    >
+                      {['contractAddress', 'owner'].includes(key) ? truncateAddress(value as string) : value}
+                    </div>
                   </div>
                 ))}
               </div>
