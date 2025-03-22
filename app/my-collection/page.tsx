@@ -3,10 +3,10 @@
 import { useState } from 'react'
 import { useAccount } from 'wagmi'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
-import ProfileSection from '@/app/components/profile-section'
-import OwnedNFTs from '@/app/components/owned-nfts'
-import ListedNFTs from '@/app/components/listed-nfts'
-import ActivityTab from '@/app/components/activity-tab'
+import ProfileSection from './components/profile-section'
+import OwnedNFTs from './components/owned-nfts'
+import ListedNFTs from './components/listed-nfts'
+import ActivityTab from './components/activity-tab'
 
 export default function MyCollectionPage() {
   const { isConnected } = useAccount()

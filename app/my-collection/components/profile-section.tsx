@@ -2,8 +2,8 @@
 
 import Link from 'next/link'
 import { useAccount, useBalance } from 'wagmi'
-import { useReadCollectibleNftBalanceOf } from '../utils/collectible-nft'
-import { useReadMarketGetMyNfTs } from '../utils/market'
+import { useReadCollectibleNftBalanceOf } from '../../utils/collectible-nft'
+import { useReadMarketGetMyNfTs } from '../../utils/market'
 import { useState, useEffect } from 'react'
 
 export default function ProfileSection() {
