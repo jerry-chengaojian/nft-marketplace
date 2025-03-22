@@ -16,7 +16,6 @@ export function NFTContent() {
   const [selectedTag, setSelectedTag] = useState('all')
   const [sortAscending, setSortAscending] = useState(true)
   const [filteredNFTs, setFilteredNFTs] = useState<typeof nfts>([])
-  const [allMetadataTags, setAllMetadataTags] = useState<Map<string, string[]>>(new Map())
 
   // Define fixed categories
   const categories = [
@@ -39,14 +38,8 @@ export function NFTContent() {
       ? Number(a.tokenId - b.tokenId)
       : Number(b.tokenId - a.tokenId)
     )
-    
-    if (selectedTag === 'all') {
-      setFilteredNFTs(sorted)
-    } else {
-      const filtered = sorted.filter(nft => nft)
-      setFilteredNFTs(filtered)
-    }
-  }, [selectedTag, nfts, allMetadataTags, sortAscending])
+    setFilteredNFTs(sorted)
+  }, [selectedTag, nfts, sortAscending])
 
   return (
     <div className="flex-1 p-8 overflow-y-auto">
@@ -94,6 +87,7 @@ export function NFTContent() {
                 tokenId={nft.tokenId}
                 address={nft.seller}
                 price={nft.price.toString()}
+                selectCategory={selectedTag}
               />
             ))
           ) : (
@@ -110,12 +104,14 @@ interface NFTCardProps {
   tokenId: bigint;
   address: string;
   price: string;
+  selectCategory: string;
 }
 
-function NFTCard({ href, tokenId, address, price }: NFTCardProps) {
+function NFTCard({ href, tokenId, address, price, selectCategory }: NFTCardProps) {
   const [metadata, setMetadata] = useState<{
     image?: string;
     title?: string;
+    category?: string;
     tags?: string[];
   } | null>(null)
 
@@ -148,6 +144,10 @@ function NFTCard({ href, tokenId, address, price }: NFTCardProps) {
 
   if (!metadata) {
     return <div>Loading...</div>
+  }
+
+  if (selectCategory !== 'all' && metadata.category !== selectCategory) {
+    return null
   }
 
   return (
