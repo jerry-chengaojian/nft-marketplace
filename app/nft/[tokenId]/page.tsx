@@ -9,7 +9,15 @@ import { useReadCollectibleNftTokenUri } from '@/app/utils/collectible-nft'
 import { useReadMarketOrderOfId } from '@/app/utils/market'
 import { useState, useEffect } from 'react'
 import { use } from 'react'
-import { formatUnits } from 'viem'
+import { formatUnits, parseUnits } from 'viem'
+import { useWriteUsdtCoinApprove, useReadUsdtCoinAllowance } from '@/app/utils/usdt-coin'
+import { useWriteMarketBuy } from '@/app/utils/market'
+import { useRouter } from 'next/navigation'
+import { useAccount } from 'wagmi'
+import { useNotification } from '@/components/ui/notification-provider'
+import { waitForTransactionReceipt } from 'viem/actions'
+import { createPublicClient, http } from 'viem'
+import { hardhat, sepolia } from 'viem/chains'
 
 // Add these type definitions at the top of the file
 interface Attribute {
@@ -32,6 +40,10 @@ const truncateAddress = (address: string) => {
 };
 
 function NFTDetailContent({ tokenId }: { tokenId: string }) {
+  const router = useRouter()
+  const { address } = useAccount()
+  const { showNotification } = useNotification()
+  
   const { data: tokenUri, isLoading: isLoadingUri } = useReadCollectibleNftTokenUri({
     args: [BigInt(tokenId)],
   })
@@ -39,6 +51,23 @@ function NFTDetailContent({ tokenId }: { tokenId: string }) {
   // Add marketplace order query
   const { data: orderData, isLoading: isLoadingOrder } = useReadMarketOrderOfId({
     args: [BigInt(tokenId)],
+  })
+
+  // Add USDT approve function
+  const { writeContractAsync: approveUsdt } = useWriteUsdtCoinApprove()
+  
+  // Add Market buy function
+  const { writeContractAsync: buyNft } = useWriteMarketBuy()
+
+  // Add allowance query
+  const { data: currentAllowance } = useReadUsdtCoinAllowance({
+    args: [
+      address as `0x${string}`,
+      process.env.NEXT_PUBLIC_MARKETPLACE_ADDRESS as `0x${string}`
+    ],
+    query: {
+      enabled: !!address
+    }
   })
 
   const [nftMetadata, setNftMetadata] = useState<NFTMetadata | null>(null)
@@ -62,6 +91,75 @@ function NFTDetailContent({ tokenId }: { tokenId: string }) {
 
     fetchMetadata()
   }, [tokenUri])
+
+  const handleBuyClick = async () => {
+    if (!address) {
+      showNotification({
+        title: 'Wallet Required',
+        description: 'Please connect your wallet first',
+        variant: 'error',
+        position: 'bottom-right'
+      })
+      return
+    }
+
+    try {
+      const priceInUnits = parseUnits(orderData?.[2].toString() || '0', 6)
+      
+      // Check if we need to approve
+      if (!currentAllowance || currentAllowance < priceInUnits) {
+        // First approve USDT
+        const approveTx = await approveUsdt({
+          args: [
+            process.env.NEXT_PUBLIC_MARKETPLACE_ADDRESS as `0x${string}`,
+            priceInUnits
+          ]
+        })
+        
+        await waitForTransactionReceipt(publicClient, { hash: approveTx })
+        
+        showNotification({
+          title: 'USDT Approved',
+          description: 'USDT has been approved successfully',
+          variant: 'success',
+          position: 'bottom-right'
+        })
+      }
+
+      // Then buy NFT
+      const buyTx = await buyNft({
+        args: [BigInt(tokenId)]
+      })
+      
+      showNotification({
+        title: 'Buying NFT',
+        description: 'Please wait while your purchase is being processed...',
+        variant: 'info',
+        position: 'bottom-right'
+      })
+      
+      await waitForTransactionReceipt(publicClient, { hash: buyTx })
+      
+      showNotification({
+        title: 'Purchase Successful',
+        description: 'Your NFT has been purchased successfully!',
+        variant: 'success',
+        position: 'bottom-right'
+      })
+
+      // Redirect to my-collection page
+      router.push('/my-collection')
+      
+    } catch (error) {
+      console.error('Buy error:', error)
+      showNotification({
+        title: 'Purchase Failed',
+        description: 'Failed to complete the purchase. Please try again.',
+        variant: 'error',
+        position: 'bottom-right'
+      })
+    }
+  }
 
   if (isLoadingUri || isLoadingMetadata || isLoadingOrder) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>
@@ -149,7 +247,10 @@ function NFTDetailContent({ tokenId }: { tokenId: string }) {
                 </div>
               </div>
               <div className="flex flex-col sm:flex-row gap-3">
-                <Button className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white">
+                <Button 
+                  className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white"
+                  onClick={handleBuyClick}
+                >
                   Buy Now
                 </Button>
               </div>
@@ -200,4 +301,11 @@ export default function NftDetailPage({ params }: { params: Promise<{ tokenId: s
       <NFTDetailContent tokenId={unwrappedParams.tokenId} />
     </div>
   )
-} 
+}
+
+const chain = process.env.NODE_ENV === 'production' ? sepolia : hardhat
+
+export const publicClient = createPublicClient({
+  chain,
+  transport: http()
+}) 
