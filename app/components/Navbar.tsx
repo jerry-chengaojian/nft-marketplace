@@ -4,9 +4,9 @@ import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { Search, Bell, Menu, X } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
+import { SearchInput } from '@/app/components/search-input'
 
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -50,14 +50,7 @@ export function Navbar() {
         </div>
         
         <div className="hidden md:flex items-center space-x-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-            <Input 
-              type="text" 
-              placeholder="Search NFTs, collections, or artists..." 
-              className="w-64 lg:w-96 pl-10 pr-4 rounded-xl"
-            />
-          </div>
+          <SearchInput className="w-64 lg:w-96" />
           <Button variant="ghost" size="icon" className="rounded-full">
             <Bell className="h-5 w-5 text-gray-500" />
           </Button>
@@ -94,12 +87,7 @@ export function Navbar() {
           </div>
           <div className="pt-3 border-t border-gray-100">
             <div className="relative mb-4">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-              <Input 
-                type="text" 
-                placeholder="Search..." 
-                className="w-full pl-10 pr-4 rounded-xl"
-              />
+              <SearchInput className="w-full" />
             </div>
             <div className="flex items-center justify-between">
               <Button variant="ghost" size="icon" className="rounded-full">

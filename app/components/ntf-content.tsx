@@ -10,6 +10,7 @@ import { useReadMarketGetAllNfTs } from '@/app/utils/market'
 import { useReadCollectibleNftTokenUri } from '@/app/utils/collectible-nft'
 import { useState, useEffect, useCallback } from 'react'
 import { formatUnits } from 'viem';
+import { useNFTStore } from '../store/nft-store';
 
 // Add type definition at the top
 type MetadataAttribute = {
@@ -129,6 +130,8 @@ function NFTCard({ href, tokenId, address, price, selectCategory }: NFTCardProps
     args: [tokenId],
   })
 
+  const setStoreMetadata = useNFTStore(state => state.setMetadata)
+
   useEffect(() => {
     let isMounted = true
 
@@ -139,6 +142,11 @@ function NFTCard({ href, tokenId, address, price, selectCategory }: NFTCardProps
         const data = await response.json()
         if (isMounted) {
           setMetadata(data)
+          setStoreMetadata(tokenId.toString(), {
+            ...data,
+            address,
+            price
+          })
         }
       } catch (error) {
         console.error('Error fetching NFT metadata:', error)
@@ -150,7 +158,7 @@ function NFTCard({ href, tokenId, address, price, selectCategory }: NFTCardProps
     return () => {
       isMounted = false
     }
-  }, [tokenUri])
+  }, [tokenUri, address, price])
 
   if (!metadata) {
     return null;
