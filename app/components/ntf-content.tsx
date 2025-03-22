@@ -84,7 +84,10 @@ export function NFTContent() {
       <div>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {isLoadingNFTs ? (
-            <div className="col-span-full text-center py-10">Loading NFTs...</div>
+            <div className="col-span-full flex flex-col items-center justify-center py-20">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4"></div>
+              <p className="text-gray-500">Loading NFTs...</p>
+            </div>
           ) : filteredNFTs && filteredNFTs.length > 0 ? (
             filteredNFTs.map((nft) => (
               <NFTCard
@@ -150,7 +153,7 @@ function NFTCard({ href, tokenId, address, price, selectCategory }: NFTCardProps
   }, [tokenUri])
 
   if (!metadata) {
-    return <div>Loading...</div>
+    return null;
   }
 
   const matchesCategory = selectCategory === 'all' || metadata.attributes?.some(attr => 
@@ -193,6 +196,12 @@ function NFTCard({ href, tokenId, address, price, selectCategory }: NFTCardProps
           <div className="flex justify-between items-center mt-3">
             <div className="text-xs text-gray-500">Current Price</div>
             <div className="text-sm font-semibold">{formatUnits(BigInt(price), 6)} USDT</div>
+          </div>
+          <div className="flex justify-between items-center mt-2">
+            <div className="text-xs text-gray-500">Seller</div>
+            <div className="text-xs font-medium text-gray-600">
+              {`${address.slice(0, 6)}...${address.slice(-4)}`}
+            </div>
           </div>
         </CardContent>
       </Card>
