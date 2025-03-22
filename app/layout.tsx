@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./components/RainbowKitProviders";
@@ -31,7 +31,11 @@ export const metadata: Metadata = {
     title: "NFT Marketplace DApp",
     description: "Create, buy, and sell NFTs on our decentralized marketplace",
   },
-  viewport: "width=device-width, initial-scale=1",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
   themeColor: "#000000",
 };
 
