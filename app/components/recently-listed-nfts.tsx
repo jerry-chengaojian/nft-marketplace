@@ -37,7 +37,11 @@ export function RecentlyListedNFTs() {
   }, [nfts])
 
   if (isLoading) {
-    return <div>Loading...</div>
+    return (
+      <div className="hidden lg:flex w-80 lg:flex-col items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4"></div>
+      </div>
+    )
   }
 
   return (
@@ -87,7 +91,7 @@ function RecentNFTCard({ tokenId, price }: { tokenId: bigint; price: bigint }) {
   }, [tokenUri])
 
   if (!metadata) {
-    return <div>Loading...</div>
+    return null
   }
 
   return (
