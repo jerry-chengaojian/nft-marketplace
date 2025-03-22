@@ -6,9 +6,11 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useState, useEffect } from 'react'
+import { usePathname } from 'next/navigation'
 
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const pathname = usePathname()
 
   useEffect(() => {
     const removeScrollLock = () => {
@@ -26,16 +28,24 @@ export function Navbar() {
     return () => observer.disconnect();
   }, []);
 
+  const getLinkClassName = (href: string) => {
+    const isActive = pathname === href
+    return `${
+      isActive 
+        ? 'text-blue-600 font-medium border-b-2 border-blue-600' 
+        : 'text-gray-500 border-b-2 border-transparent'
+    } hover:text-gray-800 transition-all duration-200 py-1`
+  }
+
   return (
     <header className="px-4 sm:px-8 py-4 border-b border-gray-100 bg-white">
       <div className="flex justify-between items-center">
         <div className="flex items-center">
           <span className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">NFTMarket</span>
           <div className="hidden md:flex ml-12 space-x-6">
-            <Link href="/" className="text-gray-500 hover:text-gray-800">Marketplace</Link>
-            <Link href="/create" className="text-gray-500 hover:text-gray-800">Create</Link>
-            <Link href="/my-collection" className="text-gray-500 hover:text-gray-800">My Collection</Link>
-            <Link href="#" className="text-gray-500 hover:text-gray-800">Community</Link>
+            <Link href="/" className={getLinkClassName('/')}>Marketplace</Link>
+            <Link href="/create" className={getLinkClassName('/create')}>Create</Link>
+            <Link href="/my-collection" className={getLinkClassName('/my-collection')}>My Collection</Link>
           </div>
         </div>
         
@@ -78,10 +88,9 @@ export function Navbar() {
       {isMenuOpen && (
         <div className="md:hidden mt-4 pb-2 space-y-4">
           <div className="flex flex-col space-y-3">
-            <Link href="#" className="text-gray-500 hover:text-gray-800 py-2">Marketplace</Link>
-            <Link href="/create" className="text-gray-500 hover:text-gray-800 py-2">Create</Link>
-            <Link href="/my-collection" className="text-gray-500 hover:text-gray-800 py-2">My Collection</Link>
-            <Link href="#" className="text-gray-500 hover:text-gray-800 py-2">Community</Link>
+            <Link href="/" className={getLinkClassName('/')}>Marketplace</Link>
+            <Link href="/create" className={getLinkClassName('/create')}>Create</Link>
+            <Link href="/my-collection" className={getLinkClassName('/my-collection')}>My Collection</Link>
           </div>
           <div className="pt-3 border-t border-gray-100">
             <div className="relative mb-4">
