@@ -135,7 +135,7 @@ export default function OwnedNFTs() {
           title: 'Failed to load your NFTs',
           description: 'There was an error fetching your NFTs from the blockchain.',
           variant: 'error',
-          position: 'top-left'
+          position: 'bottom-right'
         })
       } finally {
         setIsLoading(false)
@@ -201,7 +201,7 @@ export default function OwnedNFTs() {
           title: 'Invalid price',
           description: 'Please enter a valid price',
           variant: 'error',
-          position: 'top-left'
+          position: 'bottom-right'
         })
         return
       }
@@ -228,7 +228,7 @@ export default function OwnedNFTs() {
         title: 'NFT listing initiated',
         description: 'Your transaction is being processed...',
         variant: 'info',
-        position: 'top-left'
+        position: 'bottom-right'
       })
       
       // Close modal
@@ -242,7 +242,7 @@ export default function OwnedNFTs() {
           title: 'NFT listed successfully',
           description: `Your NFT has been listed for ${listingPrice} USDT`,
           variant: 'success',
-          position: 'top-left'
+          position: 'bottom-right'
         })
         
         // Invalidate NFT balance, Market queries, and account balance
@@ -266,7 +266,7 @@ export default function OwnedNFTs() {
         title: 'Failed to list NFT',
         description: 'There was an error listing your NFT. Please try again.',
         variant: 'error',
-        position: 'top-left'
+        position: 'bottom-right'
       })
     } finally {
       setIsListing(false)

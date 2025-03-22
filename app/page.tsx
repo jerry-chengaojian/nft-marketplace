@@ -27,7 +27,7 @@ export default function Home() {
           <div className="grid grid-cols-2 gap-4">
             <div className="transform rotate-3 shadow-lg">
               <Image 
-                src="https://images.unsplash.com/photo-1634986666676-ec8fd927c23d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80" 
+                src="/photo.png" 
                 alt="Featured NFT 1"
                 width={500}
                 height={400}
@@ -36,7 +36,7 @@ export default function Home() {
             </div>
             <div className="transform -rotate-3 shadow-lg mt-6">
               <Image 
-                src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80" 
+                src="/bg.png" 
                 alt="Featured NFT 2"
                 width={500}
                 height={400}

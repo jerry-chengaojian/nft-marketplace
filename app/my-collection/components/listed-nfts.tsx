@@ -142,7 +142,7 @@ export default function ListedNFTs() {
         title: 'Cancellation initiated',
         description: 'Your transaction is being processed...',
         variant: 'info',
-        position: 'top-left'
+        position: 'bottom-right'
       })
 
       // Wait for transaction to be mined
@@ -153,7 +153,7 @@ export default function ListedNFTs() {
           title: 'Success',
           description: 'NFT listing cancelled successfully',
           variant: 'success',
-          position: 'top-left'
+          position: 'bottom-right'
         })
 
         // Invalidate queries to refresh data
@@ -177,7 +177,7 @@ export default function ListedNFTs() {
         title: 'Failed to cancel listing',
         description: 'There was an error cancelling your listing. Please try again.',
         variant: 'error',
-        position: 'top-left'
+        position: 'bottom-right'
       })
     }
   }
@@ -201,7 +201,7 @@ export default function ListedNFTs() {
           title: 'Invalid price',
           description: 'Please enter a valid price',
           variant: 'error',
-          position: 'top-left'
+          position: 'bottom-right'
         })
         return
       }
@@ -218,7 +218,7 @@ export default function ListedNFTs() {
         title: 'Price update initiated',
         description: 'Your transaction is being processed...',
         variant: 'info',
-        position: 'top-left'
+        position: 'bottom-right'
       })
 
       // Close modal
@@ -232,7 +232,7 @@ export default function ListedNFTs() {
           title: 'Price updated successfully',
           description: `New price set to ${newPrice} USDT`,
           variant: 'success',
-          position: 'top-left'
+          position: 'bottom-right'
         })
 
         queryClient.invalidateQueries({ 
@@ -247,7 +247,7 @@ export default function ListedNFTs() {
         title: 'Failed to update price',
         description: 'There was an error updating the price. Please try again.',
         variant: 'error',
-        position: 'top-left'
+        position: 'bottom-right'
       })
     } finally {
       setIsEditing(false)
