@@ -303,9 +303,11 @@ export default function NftDetailPage({ params }: { params: Promise<{ tokenId: s
   )
 }
 
+// Move this to a separate utility file or create it inside the component
 const chain = process.env.NODE_ENV === 'production' ? sepolia : hardhat
 
-export const publicClient = createPublicClient({
+// Don't export this directly from the page file
+const publicClient = createPublicClient({
   chain,
   transport: http()
 }) 
