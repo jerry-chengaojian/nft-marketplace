@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useAccount, useBalance } from 'wagmi'
 import { useReadCollectibleNftBalanceOf } from '../../utils/collectible-nft'
-import { useReadMarketGetMyNfTs } from '../../utils/market'
+import { useReadMarketGetNfTsByOwner } from '../../utils/market'
 import { useReadUsdtCoinBalanceOf } from '../../utils/usdt-coin'
 import { formatUnits } from 'viem'
 import { useState, useEffect } from 'react'
@@ -38,7 +38,8 @@ export default function ProfileSection() {
   })
 
   // Fetch NFTs on sale
-  const { data: myListedNfts, isError: listedNftsError } = useReadMarketGetMyNfTs({
+  const { data: myListedNfts, isError: listedNftsError } = useReadMarketGetNfTsByOwner({
+    args: address ? [address] : undefined,
     query: {
       enabled: isConnected && !!address,
     }
@@ -78,7 +79,7 @@ export default function ProfileSection() {
             </Link>
           </div>
         </div>
-        
+
         <div className="flex flex-wrap gap-4 md:gap-6 justify-center md:justify-start">
           <div className="text-center min-w-[120px]">
             {isLoading ? (
@@ -91,7 +92,7 @@ export default function ProfileSection() {
               </div>
             )}
             <div className="text-sm text-gray-500">ETH Balance</div>
-          </div>         
+          </div>
 
           <div className="text-center min-w-[120px]">
             {isLoading ? (
@@ -100,23 +101,23 @@ export default function ProfileSection() {
               <div className="text-2xl font-bold text-red-500">Error</div>
             ) : (
               <div className="relative group">
-                <div className="text-2xl font-bold truncate max-w-[150px]" title={usdtBalanceData 
+                <div className="text-2xl font-bold truncate max-w-[150px]" title={usdtBalanceData
                   ? `${Number(formatUnits(usdtBalanceData, 6)).toLocaleString(undefined, {
-                      maximumFractionDigits: 2
-                    })} USDT` 
+                    maximumFractionDigits: 2
+                  })} USDT`
                   : '0.00 USDT'}>
-                  {usdtBalanceData 
+                  {usdtBalanceData
                     ? `${Number(formatUnits(usdtBalanceData, 6)).toLocaleString(undefined, {
-                        maximumFractionDigits: 2,
-                        minimumFractionDigits: 2
-                      })} USDT` 
+                      maximumFractionDigits: 2,
+                      minimumFractionDigits: 2
+                    })} USDT`
                     : '0.00 USDT'}
                 </div>
                 <div className="absolute z-10 scale-0 group-hover:scale-100 transition-all duration-200 bg-gray-800 text-white text-sm rounded py-1 px-2 -top-8 left-1/2 transform -translate-x-1/2 whitespace-nowrap">
-                  {usdtBalanceData 
+                  {usdtBalanceData
                     ? `${Number(formatUnits(usdtBalanceData, 6)).toLocaleString(undefined, {
-                        maximumFractionDigits: 6
-                      })} USDT` 
+                      maximumFractionDigits: 6
+                    })} USDT`
                     : '0.00 USDT'}
                 </div>
               </div>
@@ -134,7 +135,7 @@ export default function ProfileSection() {
             )}
             <div className="text-sm text-gray-500">Owned NFTs</div>
           </div>
-          
+
           <div className="text-center min-w-[100px]">
             {isLoading ? (
               <div className="text-2xl font-bold animate-pulse">Loading...</div>

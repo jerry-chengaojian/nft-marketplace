@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { useAccount, usePublicClient } from 'wagmi'
-import { useReadMarketGetMyNfTs } from '@/app/utils/market'
+import { useReadMarketGetNfTsByOwner } from '@/app/utils/market'
 import { formatUnits } from 'viem'
 import { AlertCircle } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -57,7 +57,8 @@ export default function ListedNFTs() {
 
   // Fetch listed NFTs from the market contract
   const { data: marketNfts, isError: isMarketError, isLoading: isMarketLoading, queryKey } = 
-    useReadMarketGetMyNfTs({
+    useReadMarketGetNfTsByOwner({
+      args: address ? [address] : undefined,
       query: {
         enabled: isConnected && !!address,
       }
@@ -107,7 +108,7 @@ export default function ListedNFTs() {
           return {
             id: Number(nft.tokenId),
             name: metadata.name,
-            image: metadata.image || 'https://placehold.co/600x400?text=NFT+Image',
+            image: metadata.image || '',
             description: metadata.description,
             category: categoryAttribute?.value || '',
             tags: tagAttributes.map(tag => tag.value),

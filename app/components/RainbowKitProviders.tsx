@@ -8,12 +8,28 @@ import '@rainbow-me/rainbowkit/styles.css';
 import {
   hardhat,
   sepolia,
+  Chain,
 } from 'wagmi/chains';
+
+// Configure custom Sepolia with ZAN RPC URLs
+const sepoliaChain: Chain = {
+  ...sepolia,
+  rpcUrls: {
+    default: {
+      http: [process.env.NEXT_PUBLIC_ZAN_HTTP_URL!],
+      webSocket: [process.env.NEXT_PUBLIC_ZAN_WS_URL!],
+    },
+    public: {
+      http: [process.env.NEXT_PUBLIC_ZAN_HTTP_URL!],
+      webSocket: [process.env.NEXT_PUBLIC_ZAN_WS_URL!],
+    },
+  },
+};
 
 const config = getDefaultConfig({
   appName: 'RainbowKit App',
   projectId: 'YOUR_PROJECT_ID',
-  chains: process.env.NODE_ENV === 'production' ? [sepolia] : [hardhat],
+  chains: process.env.NODE_ENV === 'production' ? [sepoliaChain] : [hardhat],
   ssr: true,
 });
 

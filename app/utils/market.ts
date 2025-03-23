@@ -406,7 +406,7 @@ export const marketAbi = [
  */
 export const marketAddress = {
   31337: process.env.NEXT_PUBLIC_MARKETPLACE_ADDRESS as `0x${string}`,
-  5: process.env.NEXT_PUBLIC_MARKETPLACE_ADDRESS as `0x${string}`,
+  11_155_111: process.env.NEXT_PUBLIC_MARKETPLACE_ADDRESS as `0x${string}`,
 } as const
 
 /**

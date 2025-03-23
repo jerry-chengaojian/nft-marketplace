@@ -72,6 +72,7 @@ function NFTDetailContent({ tokenId }: { tokenId: string }) {
 
   const [nftMetadata, setNftMetadata] = useState<NFTMetadata | null>(null)
   const [isLoadingMetadata, setIsLoadingMetadata] = useState(true)
+  const [isTransacting, setIsTransacting] = useState(false)
 
   useEffect(() => {
     const fetchMetadata = async () => {
@@ -103,6 +104,7 @@ function NFTDetailContent({ tokenId }: { tokenId: string }) {
       return
     }
 
+    setIsTransacting(true)
     try {
       const priceInUnits = parseUnits(orderData?.[2].toString() || '0', 6)
       
@@ -158,6 +160,8 @@ function NFTDetailContent({ tokenId }: { tokenId: string }) {
         variant: 'error',
         position: 'bottom-right'
       })
+    } finally {
+      setIsTransacting(false)
     }
   }
 
@@ -250,8 +254,9 @@ function NFTDetailContent({ tokenId }: { tokenId: string }) {
                 <Button 
                   className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white"
                   onClick={handleBuyClick}
+                  disabled={isTransacting}
                 >
-                  Buy Now
+                  {isTransacting ? 'Processing...' : 'Buy Now'}
                 </Button>
               </div>
             </div>
