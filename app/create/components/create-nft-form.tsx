@@ -79,12 +79,18 @@ export function CreateNFTForm() {
 
     try {
       setIsUploading(true)
-      // Upload to IPFS first
+      // Upload to IPFS using Pinata
       const result = await uploadToIPFS(selectedFile)
-      const ipfsHash = result.path
-      const ipfsGatewayUrl = `${process.env.NEXT_PUBLIC_IPFS_URL}:8080/ipfs/${ipfsHash}`
+      // Use the direct IPFS gateway URL
+      const ipfsUrl = result.url // 直接使用构建好的 URL
       
-      setIpfsUrl(ipfsGatewayUrl)
+      setIpfsUrl(ipfsUrl)
+      showNotification({
+        title: 'Upload Success',
+        description: 'File uploaded successfully to IPFS',
+        variant: 'success',
+        position: 'bottom-right'
+      })
     } catch (error) {
       console.error('Error handling file:', error)
       showNotification({
@@ -103,8 +109,12 @@ export function CreateNFTForm() {
       const formData = new FormData()
       formData.append('file', file)
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_IPFS_URL}:5001/api/v0/add`, {
+      const response = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
         method: 'POST',
+        headers: {
+          'pinata_api_key': process.env.NEXT_PUBLIC_PINATA_API_KEY!,
+          'pinata_secret_api_key': process.env.NEXT_PUBLIC_PINATA_SECRET_API_KEY!,
+        },
         body: formData,
       })
 
@@ -113,7 +123,11 @@ export function CreateNFTForm() {
       }
 
       const result = await response.json()
-      return { path: result.Hash }
+      return { 
+        path: result.IpfsHash,  // 使用 IpfsHash 而不是 Hash
+        size: result.PinSize,
+        url: `https://ipfs.io/ipfs/${result.IpfsHash}`
+      }
     } catch (error) {
       console.error('Error uploading to IPFS:', error)
       throw new Error('Failed to upload to IPFS')
@@ -176,7 +190,7 @@ export function CreateNFTForm() {
       const file = new File([blob], 'metadata.json')
       const result = await uploadToIPFS(file)
       
-      const metadataUrl = `${process.env.NEXT_PUBLIC_IPFS_URL}:8080/ipfs/${result.path}`
+      const metadataUrl = `https://ipfs.io/ipfs/${result.path}`
       
       // Call safeMint function
       safeMint({
