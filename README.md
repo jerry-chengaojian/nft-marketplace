@@ -2,6 +2,8 @@
 
 A full-stack decentralized NFT marketplace built with Next.js, TypeScript, and Ethereum smart contracts.
 
+**Live Demo**: [https://nft-marketplace-rosy.vercel.app](https://nft-marketplace-rosy.vercel.app)
+
 ## Overview
 
 This project is a complete NFT marketplace that allows users to:
@@ -72,6 +74,47 @@ All contracts are deployed on the Sepolia testnet and are fully verified on Ethe
 
 ## Key Features
 
+### Homepage
+The homepage features:
+- Hero section with "Explore Collection" and "Create NFT" buttons
+- Gradient background banner with featured NFT showcase
+- Two featured NFT images with artistic rotation effects
+- Recently listed NFTs sidebar
+- Main NFT content grid
+- Clean, modern design with indigo/purple gradient accents
+
+### NFT Detail Page
+The NFT detail page provides:
+- Full-screen NFT image display
+- Comprehensive NFT metadata including name, description, and attributes
+- Current price in USDT with buy functionality
+- Interactive buttons for favorites and sharing
+- Detailed NFT information including:
+  - Contract address
+  - Owner address
+  - Token ID
+  - Token standard (ERC-721)
+  - Blockchain network
+  - Fee percentage
+- Back navigation to marketplace
+- Transaction status notifications
+- Full error handling for wallet and blockchain interactions
+
+### Wallet Integration
+- Seamless wallet connection handling
+- USDT approval and allowance management
+- Transaction processing with status updates
+- Network-aware configuration (Sepolia/Hardhat)
+- Comprehensive error handling with user notifications
+
+### User Interface
+- Clean, minimalist design with gradient accents
+- Responsive layout for all screen sizes
+- Interactive elements with hover effects
+- Loading states for data fetching
+- Clear transaction feedback
+- User-friendly error messages
+
 ### NFT Creation
 Users can upload images to IPFS and mint them as NFTs with metadata including:
 - Title and detailed description
@@ -124,20 +167,6 @@ The collection management interface features:
 - Empty state messaging with clear calls to action
 - Responsive design for all screen sizes
 
-### Wallet Integration
-Seamless wallet connection using RainbowKit with:
-- Support for multiple wallets and networks
-- Automatic network switching when needed
-- Clear connection status indicators
-- Secure transaction signing
-
-### User Interface
-- Responsive design that works on mobile and desktop
-- Modern, clean aesthetic with gradient accents
-- Intuitive navigation and clear call-to-action buttons
-- Real-time feedback for all blockchain interactions
-- Comprehensive notification system for transaction updates
-
 ## Security Features
 
 - Protection against reentrancy attacks
@@ -152,28 +181,40 @@ First, run the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
-
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
 ## Project Structure
 
 - `/app`: Next.js application code
-  - `/components`: React components
+  - `/components`: Reusable React components
+    - `/ui`: Shadcn UI components and custom UI elements
+    - `Navbar.tsx`: Main navigation component
+    - `RainbowKitProviders.tsx`: Wallet connection providers
   - `/utils`: Utility functions and contract hooks
-  - `/create`: NFT creation page
+    - `collectible-nft.ts`: NFT contract interactions
+    - `market.ts`: Marketplace contract interactions
+    - `usdt-coin.ts`: USDT token contract interactions
+  - `/create`: NFT creation page and components
+    - `components/create-nft-form.tsx`: Form for minting new NFTs
   - `/my-collection`: User collection management
+    - `components/`: Collection-specific components
+  - `/store`: Global state management
+    - `nft-store.ts`: NFT metadata store
+  - `layout.tsx`: Root layout with providers
+  - `globals.css`: Global styles
+- `/components`: Shared components library
+  - `/ui`: UI component library (Shadcn UI)
+    - `button.tsx`, `card.tsx`, `dialog.tsx`, etc.
+    - `notification.tsx`: Custom notification system
+    - `notification-provider.tsx`: Context provider for notifications
 - `/contracts`: Solidity smart contracts
-  - `erc721-nft.sol`: NFT contract
-  - `erc20-usdt.sol`: Token contract
-  - `nft-market.sol`: Marketplace contract
-- `/public`: Static assets
+  - `erc721-nft.sol`: CollectibleNFT contract (ERC721)
+  - `erc20-usdt.sol`: USDTCoin contract (ERC20)
+  - `nft-market.sol`: Market contract for NFT trading
+- `/lib`: Utility libraries
+  - `utils.ts`: Common utility functions
+- `/public`: Static assets and images
 
 ## Development Notes
 
